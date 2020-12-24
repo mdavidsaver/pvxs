@@ -458,6 +458,11 @@ void Value::copyOut(void *ptr, StoreType type) const
         break;
     }
     case StoreType::Null:
+        if(type==StoreType::Compound) {
+            // structure extract self
+            *reinterpret_cast<Value*>(ptr) = *this;
+            return;
+        }
         break;
     }
 
