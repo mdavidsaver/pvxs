@@ -203,6 +203,26 @@ struct Channel {
                                    const std::string& server);
 };
 
+struct Discovery : public OperationBase
+{
+    const std::shared_ptr<ContextImpl> context;
+    std::function<void(const Discovered &)> notify;
+    bool running = false;
+
+    Discovery(const std::shared_ptr<ContextImpl>& context);
+    ~Discovery();
+
+    virtual bool cancel() override final;
+private:
+    bool _cancel(bool implicit);
+
+    // unused for this special case
+    virtual void _reExecGet(std::function<void (Result &&)> &&resultcb) override final;
+    virtual void _reExecPut(const Value &arg, std::function<void (Result &&)> &&resultcb) override final;
+    virtual void createOp() override final;
+    virtual void disconnected(const std::shared_ptr<OperationBase> &self) override final;
+};
+
 struct ContextImpl : public std::enable_shared_from_this<ContextImpl>
 {
     SockAttach attach;
@@ -259,9 +279,13 @@ struct ContextImpl : public std::enable_shared_from_this<ContextImpl>
     // we keep a ref here as long as beaconCleaner is in use
     UDPManager manager;
 
+    unsigned discoverAge = 0u;
+    std::map<Discovery*, std::weak_ptr<Discovery>> discoverers;
+
     const evevent beaconCleaner;
     const evevent cacheCleaner;
     const evevent nsChecker;
+    const evevent discoverTick;
 
     INST_COUNTER(ClientContextImpl);
 
@@ -278,7 +302,7 @@ struct ContextImpl : public std::enable_shared_from_this<ContextImpl>
 
     bool onSearch();
     static void onSearchS(evutil_socket_t fd, short evt, void *raw);
-    void tickSearch();
+    void tickSearch(bool discover);
     static void tickSearchS(evutil_socket_t fd, short evt, void *raw);
     void tickBeaconClean();
     static void tickBeaconCleanS(evutil_socket_t fd, short evt, void *raw);
@@ -286,6 +310,8 @@ struct ContextImpl : public std::enable_shared_from_this<ContextImpl>
     static void cacheCleanS(evutil_socket_t fd, short evt, void *raw);
     void onNSCheck();
     static void onNSCheckS(evutil_socket_t fd, short evt, void *raw);
+    void onDiscoverTick();
+    static void onDiscoverTickS(evutil_socket_t fd, short evt, void *raw);
 };
 
 struct Context::Pvt {
