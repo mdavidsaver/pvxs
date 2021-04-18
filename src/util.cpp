@@ -15,6 +15,8 @@
 
 #include <ctype.h>
 
+#include <epicsThread.h>
+
 #include <pvxs/log.h>
 #include <pvxs/util.h>
 #include <pvxs/sharedArray.h>
@@ -208,36 +210,105 @@ std::ostream& operator<<(std::ostream& strm, const ServerGUID& guid)
 
 #if !defined(__rtems__) && !defined(vxWorks)
 
-static
-std::atomic<SigInt*> thesig{nullptr};
+struct SigInt::Pvt : public epicsThreadRunable {
+    void (*prevINT)(int);
+    void (*prevTERM)(int);
+    const double timeout;
+    epicsEvent etimeout;
+    std::atomic<bool> active{true};
+    const std::function<void(reason_t)> handler;
+    epicsThread worker;
 
-void SigInt::_handle(int num)
+    explicit Pvt(double timeout, std::function<void(reason_t)>&& handler)
+        :timeout(timeout)
+        ,handler(handler)
+        ,worker(*this,
+                "SigInt",
+                epicsThreadGetStackSize(epicsThreadStackBig),
+                epicsThreadPriorityLow)
+    {
+        Pvt *expect = nullptr;
+
+        if(!thesig.compare_exchange_strong(expect, this))
+            throw std::logic_error("Only one SigInt allowed");
+
+        prevINT = signal(SIGINT, &sighandle);
+        prevTERM = signal(SIGTERM, &sighandle);
+
+        if(timeout > 0.0)
+            worker.start();
+    }
+
+    ~Pvt() {
+        disarm();
+        etimeout.signal();
+        worker.exitWait();
+    }
+
+    void disarm() {
+        bool expect = true;
+        if(active.compare_exchange_strong(expect, false)) {
+            thesig.store(nullptr);
+
+            signal(SIGINT, prevINT);
+            signal(SIGTERM, prevTERM);
+        }
+    }
+
+    virtual void run() override final {
+        bool ret = etimeout.wait(timeout);
+        disarm();
+        if(!ret) {
+            // timeout
+            handler(Timeout);
+        }
+    }
+
+    static
+    std::atomic<Pvt*> thesig;
+
+    static
+    void sighandle(int num);
+};
+
+std::atomic<SigInt::Pvt*> SigInt::Pvt::thesig{nullptr};
+
+void SigInt::Pvt::sighandle(int num)
 {
     auto sig = thesig.load();
-    if(!sig)
-        return;
-
-    sig->handler();
+    if(sig && sig->active) {
+        try {
+            sig->handler(Signaled);
+        }catch(std::exception& e){
+            log_crit_printf(log, "Unhandled execption in SigInt: %s\n", e.what());
+        }
+    }
 }
 
-SigInt::SigInt(decltype (handler)&& handler)
-    :handler(std::move(handler))
+static
+std::function<void(SigInt::reason_t)> adapt(std::function<void()>&& handler)
 {
-    SigInt* expect = nullptr;
-
-    if(!thesig.compare_exchange_strong(expect, this))
-        throw std::logic_error("Only one SigInt allowed");
-
-    prevINT = signal(SIGINT, &_handle);
-    prevTERM = signal(SIGTERM, &_handle);
+    return std::bind([](std::function<void()>& H, SigInt::reason_t R) {
+        auto H2(std::move(H));
+        try {
+            H2();
+        }catch(std::exception& e){
+            log_crit_printf(log, "Unhandled execption in SigInt: %s\n", e.what());
+        }
+    }, std::move(handler), std::placeholders::_1);
 }
+
+SigInt::SigInt(std::function<void()>&& handler)
+    :SigInt(-1.0, adapt(std::move(handler)))
+{}
+
+SigInt::SigInt(double timeout,
+               std::function<void(reason_t)>&& handler)
+    :pvt{new Pvt(timeout, std::move(handler))}
+{}
 
 SigInt::~SigInt()
 {
-    signal(SIGINT, prevINT);
-    signal(SIGTERM, prevTERM);
-
-    thesig.store(nullptr);
 }
 
 #endif // !defined(__rtems__) && !defined(vxWorks)

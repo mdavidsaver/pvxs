@@ -98,13 +98,20 @@ std::ostream& operator<<(std::ostream&, const ServerGUID&);
  * Saves existing handler, which are restored by dtor.
  */
 class PVXS_API SigInt {
-    void (*prevINT)(int);
-    void (*prevTERM)(int);
-    const std::function<void()> handler;
-    static void _handle(int);
+    struct Pvt;
+    std::unique_ptr<Pvt> pvt;
 public:
+    enum reason_t {
+        Signaled,
+        Timeout,
+    };
     //! Install signal handler.
-    SigInt(decltype (handler)&& handler);
+    SigInt(std::function<void()>&& handler);
+    //! Install signal handler, which may also be executed after timeout seconds.
+    //! @param timeout If >0.0, handler will be call with Timeout unless a signal arrives earlier.
+    //! @since UNRELEASED
+    SigInt(double timeout,
+           std::function<void(reason_t)>&& handler);
     ~SigInt();
 };
 
@@ -114,6 +121,8 @@ class SigInt {
     const std::function<void()> handler;
 public:
     SigInt(std::function<void()>&& handler) :handler(std::move(handler)) {}
+    SigInt(double timeout,
+           std::function<void(bool)>&& handler) {}
 };
 
 #endif // !defined(__rtems__) && !defined(vxWorks)
