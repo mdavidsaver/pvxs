@@ -4,6 +4,8 @@
  * in file LICENSE that is included with this distribution.
  */
 
+#include <osiSockExt.h>
+
 #include <cstring>
 
 #include <epicsUnitTest.h>
@@ -27,6 +29,7 @@ void test_udp()
 
     SockAddr bind_addr(SockAddr::loopback(AF_INET));
 
+    enable_IP_PKTINFO(A.sock);
     A.bind(bind_addr);
     testNotEq(bind_addr.port(), 0)<<"bound port";
 
@@ -42,14 +45,24 @@ void test_udp()
 
     uint8_t rxbuf[8] = {};
     SockAddr src;
+    SockAddr dest;
 
     testDiag("Call recvfrom()");
-    socklen_t slen = src.size();
-    ret = recvfrom(A.sock, (char*)rxbuf, sizeof(rxbuf), 0, &src->sa, &slen);
+    ret = recvfromx{A.sock, (char*)rxbuf, sizeof(rxbuf), &src, &dest}.call();
+    // only the destination address is captured, not the port
+    if(dest.family()==AF_INET)
+        dest.setPort(bind_addr.port());
 
     testOk(ret==4 && rxbuf[0]==0x12 && rxbuf[1]==0x34 && rxbuf[2]==0x56 && rxbuf[3]==0x78,
             "Recv'd %d(%d) [%u, %u, %u, %u]", ret, EVUTIL_SOCKET_ERROR(), rxbuf[0], rxbuf[1], rxbuf[2], rxbuf[3]);
     testEq(src, send_addr);
+#ifdef __rtems__
+    testTodoBegin("RTEMS libbsd circa 5.1 doesn't actually implement IP_PKTINFO");
+#endif
+    testEq(dest, bind_addr);
+#ifdef __rtems__
+    testTodoEnd();
+#endif
 }
 
 void test_local_mcast()
@@ -68,6 +81,7 @@ void test_local_mcast()
     SockAddr bind_addr(mcast_addr);
 #endif
 
+    enable_IP_PKTINFO(A.sock);
     A.bind(bind_addr);
     mcast_addr.setPort(bind_addr.port());
 
@@ -88,14 +102,24 @@ void test_local_mcast()
 
     uint8_t rxbuf[8] = {};
     SockAddr src;
+    SockAddr dest;
 
     testDiag("Call recvfrom()");
-    socklen_t slen = src.size();
-    ret = recvfrom(A.sock, (char*)rxbuf, sizeof(rxbuf), 0, &src->sa, &slen);
+    ret = recvfromx{A.sock, (char*)rxbuf, sizeof(rxbuf), &src, &dest}.call();
+    if(dest.family()==AF_INET)
+        dest.setPort(mcast_addr.port());
+
     testOk(ret==4 && rxbuf[0]==0x12 && rxbuf[1]==0x34 && rxbuf[2]==0x56 && rxbuf[3]==0x78,
             "Recv'd %d [%u, %u, %u, %u]", ret, rxbuf[0], rxbuf[1], rxbuf[2], rxbuf[3]);
 
     testEq(src, sender_addr);
+#ifdef __rtems__
+    testTodoBegin("RTEMS libbsd circa 5.1 doesn't actually implement IP_PKTINFO");
+#endif
+    testEq(dest, mcast_addr);
+#ifdef __rtems__
+    testTodoEnd();
+#endif
 }
 
 void test_from_wire()
@@ -207,7 +231,7 @@ void test_to_wire()
 MAIN(testsock)
 {
     SockAttach attach;
-    testPlan(33);
+    testPlan(35);
     testSetup();
     test_udp();
     test_local_mcast();

@@ -399,8 +399,16 @@ bool evbase::assertInRunningLoop() const
 evsocket::evsocket(evutil_socket_t sock)
     :sock(sock)
 {
-    if(sock==evutil_socket_t(-1))
-        throw std::bad_alloc();
+    if(sock==evutil_socket_t(-1)) {
+        int err = SOCKERRNO;
+#ifdef _WIN32
+        if(err==WSANOTINITIALISED) {
+            throw std::runtime_error("WSANOTINITIALISED");
+        }
+#endif
+        (void)err;
+        throw std::runtime_error("Unable to allocate socket");
+    }
 
     evutil_make_socket_closeonexec(sock);
 
