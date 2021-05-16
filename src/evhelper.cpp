@@ -474,6 +474,15 @@ void evsocket::mcast_join(const SockAddr& grp, const SockAddr& iface) const
     req.imr_multiaddr.s_addr = grp->in.sin_addr.s_addr;
     req.imr_interface.s_addr = iface->in.sin_addr.s_addr;
 
+    /* For Linux, look closely at the wording in "man 7 ip" for IP_ADD_MEMBERSHIP.
+     * It says "Application" not "socket".  Yes, that's right.  On Linux at least mcast
+     * group membership is per process!  After this socket has joined, all sockets
+     * which bind() to the group address or 0.0.0.0 will receive mcasts for this group.
+     * Binding to the iface address does not work.
+     *
+     * For winsock, Documentation says "Join the socket".  As a further difference,
+     * winsock doesn't allow bind() to an mcast address.
+     */
     int ret = setsockopt(sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&req, sizeof(req));
     if(ret)
         log_err_printf(logerr, "Unable to join mcast group %s on %s : %s\n",

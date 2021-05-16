@@ -67,6 +67,10 @@ public:
     static SockAddr any(int af, unsigned port=0);
     static SockAddr loopback(int af, unsigned port=0);
 
+    inline int compare(const SockAddr& o, bool useport=true) const {
+        return evutil_sockaddr_cmp(&store.sa, &o.store.sa, useport);
+    }
+
     inline bool operator<(const SockAddr& o) const {
         return evutil_sockaddr_cmp(&store.sa, &o.store.sa, true)<0;
     }
