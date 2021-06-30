@@ -1,0 +1,961 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Value Container &#8212; PVXS 0.2.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Common Type Definitions" href="nt.html" />
+    <link rel="prev" title="Command Line Tools" href="cli.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="value-container">
+<h1>Value Container<a class="headerlink" href="#value-container" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="nt.html">Common Type Definitions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="ntscalar.html">NTScalar and NTScalarArray</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nt.html#time-t">time_t</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nt.html#alarm-t">alarm_t</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nt.html#ntenum">NTEnum</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nt.html#ntndarray">NTNDArray</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nt.html#nturi">NTURI</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="typedef.html">Defining Custom Types</a></li>
+</ul>
+</div>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;pvxs/data.h&gt;</span><span class="cp"></span>
+<span class="k">namespace</span> <span class="n">pvxs</span> <span class="p">{</span> <span class="p">...</span> <span class="p">}</span>
+</pre></div>
+</div>
+<p><a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value</span></code></a> is the primary data container type used with PVXS.
+A <a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value</span></code></a> may be obtained via the remote peer (client or server),
+or created locally.  See <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">ntapi</span></code> or <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">typedefapi</span></code>.</p>
+<p><a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value</span></code></a> is a safe pointer-like object which, maybe, references
+a node in a tree of sub-structures and leaf fields.
+This tree will be referred to as a Structure as it behaves
+in many ways like a C ‘struct’.</p>
+<p>For example, the following code:</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Value</span> <span class="n">top</span> <span class="o">=</span> <span class="n">TypeDef</span><span class="p">(</span><span class="n">TypeCode</span><span class="o">::</span><span class="n">Struct</span><span class="p">,</span> <span class="p">{</span>
+    <span class="n">members</span><span class="o">::</span><span class="n">Int32</span><span class="p">(</span><span class="s">&quot;fldname&quot;</span><span class="p">),</span>
+<span class="p">}).</span><span class="n">create</span><span class="p">();</span>
+
+<span class="n">top</span><span class="p">[</span><span class="s">&quot;fldname&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+<span class="n">fld</span> <span class="o">=</span> <span class="n">top</span><span class="p">[</span><span class="s">&quot;fldname&quot;</span><span class="p">];</span>
+<span class="n">fld</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>Is analogous to the following pseudo code.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="c1">// pseudo-code</span>
+<span class="k">struct</span> <span class="n">anon</span> <span class="p">{</span>
+    <span class="kt">int32_t</span> <span class="n">fldname</span><span class="o">=</span><span class="mi">0u</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="kt">void</span><span class="o">*</span> <span class="n">top</span> <span class="o">=</span> <span class="k">new</span> <span class="n">anon</span><span class="p">;</span>
+
+<span class="k">static_cast</span><span class="o">&lt;</span><span class="n">anon</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">top</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">fldname</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+<span class="kt">void</span><span class="o">*</span> <span class="n">fld</span> <span class="o">=</span> <span class="o">&amp;</span><span class="k">static_cast</span><span class="o">&lt;</span><span class="n">anon</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">top</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">fldname</span><span class="p">;</span>
+<span class="k">static_cast</span><span class="o">&lt;</span><span class="kt">int32_t</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">fld</span><span class="p">)</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>With the chief functional difference being that the analogs of the casts are made safe.
+Also, the storage of the underlying Structure will be free’d when no more Values reference it.</p>
+<p>A Value which does not reference any underlying Structure is not valid, or “empty”.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Value</span> <span class="n">dummy</span><span class="p">;</span>
+<span class="n">assert</span><span class="p">(</span><span class="o">!</span><span class="n">dummy</span><span class="p">.</span><span class="n">valid</span><span class="p">());</span>
+<span class="n">assert</span><span class="p">(</span><span class="o">!</span><span class="n">dummy</span><span class="p">);</span> <span class="c1">// operator bool() is an alias for valid()</span>
+</pre></div>
+</div>
+<p>An invalid Value may be returned on error by some methods.
+All operations on an invalid Value should be safe and well defined.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Value</span> <span class="nf">top</span><span class="p">(</span><span class="n">nt</span><span class="o">::</span><span class="n">NTScalar</span><span class="p">{</span><span class="n">TypeCode</span><span class="o">::</span><span class="n">Int32</span><span class="p">}.</span><span class="n">create</span><span class="p">());</span>
+<span class="kt">int32_t</span> <span class="n">val</span> <span class="o">=</span> <span class="n">top</span><span class="p">[</span><span class="s">&quot;nonexistant&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="kt">int32_t</span><span class="o">&gt;</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>In this example, the operator[] lookup of a non-existant field returns an invalid Value.
+Attempting to extract an integer from this will then throw a <a class="reference internal" href="#_CPPv4N4pvxs7NoFieldE" title="pvxs::NoField"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::NoField</span></code></a> exception.</p>
+<div class="section" id="value">
+<h2>Value<a class="headerlink" href="#value" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="field-lookup">
+<h3>Field Lookup<a class="headerlink" href="#field-lookup" title="Permalink to this headline">¶</a></h3>
+<p>Access to members of structured types is accomplished through <a class="reference internal" href="#_CPPv4N4pvxs5ValueixERKNSt6stringE" title="pvxs::Value::operator[]"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value::operator[]()</span></code></a> or <a class="reference internal" href="#_CPPv4N4pvxs5Value6lookupERKNSt6stringE" title="pvxs::Value::lookup"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value::lookup()</span></code></a>.
+These two methods differ in how errors are communicated.
+operator[] will return an “invalid” or “empty” Value if the expression does not address a member.
+lookup() will throw an exception describing where and how expression evaluation failed.</p>
+</div>
+<div class="section" id="iteration">
+<h3>Iteration<a class="headerlink" href="#iteration" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value</span></code></a> instances pointing to a non-array structured data field (Struct or Union)
+may be iterated.  Iteration comes in three variations: <a class="reference internal" href="#_CPPv4NK4pvxs5Value4iallEv" title="pvxs::Value::iall"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value::iall()</span></code></a>, <a class="reference internal" href="#_CPPv4NK4pvxs5Value9ichildrenEv" title="pvxs::Value::ichildren"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value::ichildren()</span></code></a>,
+and <a class="reference internal" href="#_CPPv4NK4pvxs5Value7imarkedEv" title="pvxs::Value::imarked"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value::imarked()</span></code></a>.</p>
+<p>For a Struct, iall() is a depth first traversal of all fields.
+ichildren() traverses all child fields (excluding eg. grandchildren
+and further).  imarked() considers all fields, but only visits
+those which have beem marked (<a class="reference internal" href="#_CPPv4NK4pvxs5Value8isMarkedEbb" title="pvxs::Value::isMarked"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value::isMarked()</span></code></a>).</p>
+<p>For a Union.  iall() and ichildren() are identical, and will
+visit all possible Union members, excluding the implicit NULL member.
+Traversal does not effect member selection.
+imarked() for a Union will visit at most one member (if one is selected)&gt;</p>
+<p>Iteration of Union may return Value instances
+allocated with temporary storage.  Changes to these instances
+will not effect the underlying structure.</p>
+<p>Iteration of other field types, including StructA and UnionA is not implemented at this time,
+and will always appear as empty.</p>
+<dl class="class">
+<dt id="_CPPv4N4pvxs5ValueE">
+<span id="_CPPv3N4pvxs5ValueE"></span><span id="_CPPv2N4pvxs5ValueE"></span><span id="pvxs::Value"></span><span class="target" id="classpvxs_1_1Value"></span><em class="property">class </em><code class="descname">Value</code><a class="headerlink" href="#_CPPv4N4pvxs5ValueE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Generic data container</p>
+<p>References a single data field, which may be free-standing (eg. “int x = 5;”) or a member of an enclosing Struct, or an element in an array of Struct.</p>
+<p><ul class="simple">
+<li>Use <a class="reference internal" href="#classpvxs_1_1Value_1a73bc11a2d87d480f088cf12b4baef070"><span class="std std-ref">valid()</span></a> (or operator bool() ) to determine if pointed to a valid field.</li>
+<li>Use operator[] to traverse within a Kind::Compound field.</li>
+</ul>
+</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Value</span> <span class="n">val</span> <span class="o">=</span> <span class="n">nt</span><span class="p">::</span><span class="n">NTScalar</span><span class="p">{</span><span class="n">TypeCode</span><span class="p">::</span><span class="n">Int32</span><span class="p">}</span><span class="o">.</span><span class="n">create</span><span class="p">();</span>
+<span class="n">val</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">42</span><span class="p">;</span>
+<span class="n">Value</span> <span class="n">alias</span> <span class="o">=</span> <span class="n">val</span><span class="p">;</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">alias</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span><span class="o">.</span><span class="k">as</span><span class="o">&lt;</span><span class="n">int32_t</span><span class="o">&gt;</span><span class="p">()</span><span class="o">==</span><span class="mi">42</span><span class="p">);</span> <span class="o">//</span> <span class="s1">&#39;alias&#39;</span> <span class="ow">is</span> <span class="n">a</span> <span class="n">second</span> <span class="n">reference</span> <span class="n">to</span> <span class="n">the</span> <span class="n">same</span> <span class="n">Struct</span>
+</pre></div>
+</div>
+ </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Public Functions</p>
+<dl class="function">
+<dt id="_CPPv4N4pvxs5Value5ValueEv">
+<span id="_CPPv3N4pvxs5Value5ValueEv"></span><span id="_CPPv2N4pvxs5Value5ValueEv"></span><span id="pvxs::Value::ValueCE"></span><span class="target" id="classpvxs_1_1Value_1acc8783fc04cb912721f4fae0b1b6da73"></span><em class="property">constexpr</em> <code class="descname">Value</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs5Value5ValueEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>default empty <a class="reference internal" href="#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs5Value10cloneEmptyEv">
+<span id="_CPPv3NK4pvxs5Value10cloneEmptyEv"></span><span id="_CPPv2NK4pvxs5Value10cloneEmptyEv"></span><span id="pvxs::Value::cloneEmptyC"></span><span class="target" id="classpvxs_1_1Value_1a97c60a923729ecaa4099127e6c9d6586"></span><a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a> <code class="descname">cloneEmpty</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs5Value10cloneEmptyEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>allocate new storage, with default values </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs5Value5cloneEv">
+<span id="_CPPv3NK4pvxs5Value5cloneEv"></span><span id="_CPPv2NK4pvxs5Value5cloneEv"></span><span id="pvxs::Value::cloneC"></span><span class="target" id="classpvxs_1_1Value_1ac612abf65f721e69e34274821773af70"></span><a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a> <code class="descname">clone</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs5Value5cloneEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>allocate new storage and copy in our values </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs5Value6assignERK5Value">
+<span id="_CPPv3N4pvxs5Value6assignERK5Value"></span><span id="_CPPv2N4pvxs5Value6assignERK5Value"></span><span id="pvxs::Value::assign__ValueCR"></span><span class="target" id="classpvxs_1_1Value_1a4f540dc26296c6333897e5813472a16b"></span><a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a> &amp;<code class="descname">assign</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a> &amp;<em>o</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs5Value6assignERK5Value" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>copy value(s) from other. Acts like from(o) for kind==Kind::Compound . Acts like from(o.as&lt;T&gt;()) for kind!=Kind::Compound </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs5Value11allocMemberEv">
+<span id="_CPPv3N4pvxs5Value11allocMemberEv"></span><span id="_CPPv2N4pvxs5Value11allocMemberEv"></span><span id="pvxs::Value::allocMember"></span><span class="target" id="classpvxs_1_1Value_1a62c858a0da155b81a6ad948a30619df3"></span><a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a> <code class="descname">allocMember</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs5Value11allocMemberEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Use to allocate members for an array of Struct and array of Union. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs5Value5validEv">
+<span id="_CPPv3NK4pvxs5Value5validEv"></span><span id="_CPPv2NK4pvxs5Value5validEv"></span><span id="pvxs::Value::validC"></span><span class="target" id="classpvxs_1_1Value_1a73bc11a2d87d480f088cf12b4baef070"></span>bool <code class="descname">valid</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs5Value5validEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Does this <a class="reference internal" href="#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> actually reference some underlying storage. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs5Value8isMarkedEbb">
+<span id="_CPPv3NK4pvxs5Value8isMarkedEbb"></span><span id="_CPPv2NK4pvxs5Value8isMarkedEbb"></span><span id="pvxs::Value::isMarked__b.bC"></span><span class="target" id="classpvxs_1_1Value_1a7cc2b669bbd17582953e52a30d4ff3f6"></span>bool <code class="descname">isMarked</code><span class="sig-paren">(</span>bool <em>parents</em> = true, bool <em>children</em> = false<span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs5Value8isMarkedEbb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Test if this field is marked as valid/changed. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs5Value8ifMarkedEbb">
+<span id="_CPPv3NK4pvxs5Value8ifMarkedEbb"></span><span id="_CPPv2NK4pvxs5Value8ifMarkedEbb"></span><span id="pvxs::Value::ifMarked__b.bC"></span><span class="target" id="classpvxs_1_1Value_1a4f49728cb14d181d03b3f07dd7a2af2c"></span><a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a> <code class="descname">ifMarked</code><span class="sig-paren">(</span>bool <em>parents</em> = true, bool <em>children</em> = false<span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs5Value8ifMarkedEbb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>return *this if <a class="reference internal" href="#classpvxs_1_1Value_1a7cc2b669bbd17582953e52a30d4ff3f6"><span class="std std-ref">isMarked()</span></a>==true, or a !valid() ref. if false. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs5Value4markEb">
+<span id="_CPPv3N4pvxs5Value4markEb"></span><span id="_CPPv2N4pvxs5Value4markEb"></span><span id="pvxs::Value::mark__b"></span><span class="target" id="classpvxs_1_1Value_1a3899b9e57f2dd4b59abfdbf042f8fcbe"></span>void <code class="descname">mark</code><span class="sig-paren">(</span>bool <em>v</em> = true<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs5Value4markEb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Mark this field as valid/changed. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs5Value6unmarkEbb">
+<span id="_CPPv3N4pvxs5Value6unmarkEbb"></span><span id="_CPPv2N4pvxs5Value6unmarkEbb"></span><span id="pvxs::Value::unmark__b.b"></span><span class="target" id="classpvxs_1_1Value_1afd35db6d8ddbd2aa43b6e7978eddb915"></span>void <code class="descname">unmark</code><span class="sig-paren">(</span>bool <em>parents</em> = false, bool <em>children</em> = true<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs5Value6unmarkEbb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Remove mark from this field. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs5Value4typeEv">
+<span id="_CPPv3NK4pvxs5Value4typeEv"></span><span id="_CPPv2NK4pvxs5Value4typeEv"></span><span id="pvxs::Value::typeC"></span><span class="target" id="classpvxs_1_1Value_1a2d396f0998ff35114795820d53f86d53"></span><a class="reference internal" href="typedef.html#_CPPv4N4pvxs8TypeCodeE" title="pvxs::TypeCode">TypeCode</a> <code class="descname">type</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs5Value4typeEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Type of the referenced field (or Null) </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs5Value11storageTypeEv">
+<span id="_CPPv3NK4pvxs5Value11storageTypeEv"></span><span id="_CPPv2NK4pvxs5Value11storageTypeEv"></span><span id="pvxs::Value::storageTypeC"></span><span class="target" id="classpvxs_1_1Value_1a3c3ec6d7c8364b0ee0646dbae6ecc5d3"></span>StoreType <code class="descname">storageType</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs5Value11storageTypeEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Type of value stored in referenced field. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs5Value2idEv">
+<span id="_CPPv3NK4pvxs5Value2idEv"></span><span id="_CPPv2NK4pvxs5Value2idEv"></span><span id="pvxs::Value::idC"></span><span class="target" id="classpvxs_1_1Value_1a30b492f12a9f392d29848a0982bbe68e"></span><em class="property">const</em> std::string &amp;<code class="descname">id</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs5Value2idEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Type ID string (Struct or Union only) </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs5Value12idStartsWithERKNSt6stringE">
+<span id="_CPPv3NK4pvxs5Value12idStartsWithERKNSt6stringE"></span><span id="_CPPv2NK4pvxs5Value12idStartsWithERKNSt6stringE"></span><span id="pvxs::Value::idStartsWith__ssCRC"></span><span class="target" id="classpvxs_1_1Value_1a959c7e34180b146533bd4fa3f8a25085"></span>bool <code class="descname">idStartsWith</code><span class="sig-paren">(</span><em class="property">const</em> std::string &amp;<em>prefix</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs5Value12idStartsWithERKNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Test prefix of Type ID string (Struct or Union only) </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs5Value9equalInstERK5Value">
+<span id="_CPPv3NK4pvxs5Value9equalInstERK5Value"></span><span id="_CPPv2NK4pvxs5Value9equalInstERK5Value"></span><span id="pvxs::Value::equalInst__ValueCRC"></span><span class="target" id="classpvxs_1_1Value_1a934c38823ea167ab0eee895fde3c5d45"></span>bool <code class="descname">equalInst</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a> &amp;<em>o</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs5Value9equalInstERK5Value" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Test for instance equality. aka. this==this. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs5Value9equalTypeERK5Value">
+<span id="_CPPv3NK4pvxs5Value9equalTypeERK5Value"></span><span id="_CPPv2NK4pvxs5Value9equalTypeERK5Value"></span><span id="pvxs::Value::equalType__ValueCRC"></span><span class="target" id="classpvxs_1_1Value_1a693aeb971e28ea23f061f139c3a55543"></span>bool <code class="descname">equalType</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a> &amp;<em>o</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs5Value9equalTypeERK5Value" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Test for equality of type only (including field names) </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs5Value6nameOfERK5Value">
+<span id="_CPPv3NK4pvxs5Value6nameOfERK5Value"></span><span id="_CPPv2NK4pvxs5Value6nameOfERK5Value"></span><span id="pvxs::Value::nameOf__ValueCRC"></span><span class="target" id="classpvxs_1_1Value_1ab5047040ebc909fd87386d22a46f527b"></span><em class="property">const</em> std::string &amp;<code class="descname">nameOf</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a> &amp;<em>descendant</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs5Value6nameOfERK5Value" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Return our name for a descendant field. <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Value</span> <span class="n">v</span> <span class="o">=</span> <span class="o">...</span><span class="p">;</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">nameOf</span><span class="p">(</span><span class="n">v</span><span class="p">[</span><span class="s2">&quot;some.field&quot;</span><span class="p">])</span><span class="o">==</span><span class="s2">&quot;some.field&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+ <dl class="docutils">
+<dt><strong>Exceptions</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal notranslate"><a class="reference internal" href="#structpvxs_1_1NoField"><span class="std std-ref"><span class="pre">NoField</span></span></a></code>: unless both this and descendant are <a class="reference internal" href="#classpvxs_1_1Value_1a73bc11a2d87d480f088cf12b4baef070"><span class="std std-ref">valid()</span></a> </li>
+<li><code class="docutils literal notranslate"><span class="pre">std::logic_error</span></code>: if descendant is not actually a descendant </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs5Value2asEv">
+<span id="_CPPv3NK4pvxs5Value2asEv"></span><span id="_CPPv2NK4pvxs5Value2asEv"></span><span id="pvxs::Value::asC"></span><em class="property">template </em>&lt;<em class="property">typename</em> T&gt;<br /><span class="target" id="classpvxs_1_1Value_1ac6ae3373ac63153c6b71cffc8a5a329c"></span>T <code class="descname">as</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs5Value2asEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Extract from field.</p>
+<p>Type ‘T’ may be one of:<ul class="simple">
+<li>bool</li>
+<li>uint8_t, uint16_t, uint32_t, uint64_t</li>
+<li>int8_t, int16_t, int32_t, int64_t</li>
+<li>float, double</li>
+<li>std::string</li>
+<li><a class="reference internal" href="#classpvxs_1_1Value"><span class="std std-ref">Value</span></a></li>
+<li>shared_array&lt;const void&gt;</li>
+<li>An enum where the underlying type is one of the preceding (since UNRELEASED).</li>
+</ul>
+</p>
+<p><dl class="docutils">
+<dt><strong>Exceptions</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal notranslate"><a class="reference internal" href="#structpvxs_1_1NoField"><span class="std std-ref"><span class="pre">NoField</span></span></a></code>: !this-&gt;<a class="reference internal" href="#classpvxs_1_1Value_1a73bc11a2d87d480f088cf12b4baef070"><span class="std std-ref">valid()</span></a> </li>
+<li><code class="docutils literal notranslate"><a class="reference internal" href="#structpvxs_1_1NoConvert"><span class="std std-ref"><span class="pre">NoConvert</span></span></a></code>: if the field value can not be coerced to type T </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs5Value2asER1T">
+<span id="_CPPv3NK4pvxs5Value2asER1T"></span><span id="_CPPv2NK4pvxs5Value2asER1T"></span><span id="pvxs::Value::as__TRC"></span><em class="property">template </em>&lt;<em class="property">typename</em> T&gt;<br /><span class="target" id="classpvxs_1_1Value_1a0f869d54d9419ba5642e7c218bb37bde"></span>bool <code class="descname">as</code><span class="sig-paren">(</span>T &amp;<em>val</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs5Value2asER1T" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Attempt to extract value from field. <dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>false if <a class="reference internal" href="#classpvxs_1_1Value_1ac6ae3373ac63153c6b71cffc8a5a329c"><span class="std std-ref">as&lt;T&gt;()</span></a> would throw <a class="reference internal" href="#structpvxs_1_1NoField"><span class="std std-ref">NoField</span></a> or <a class="reference internal" href="#structpvxs_1_1NoConvert"><span class="std std-ref">NoConvert</span></a> </dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs5Value2asERR2FN">
+<span id="_CPPv3NK4pvxs5Value2asERR2FN"></span><span id="_CPPv2NK4pvxs5Value2asERR2FN"></span><span id="pvxs::Value::as__FNRRC"></span><em class="property">template </em>&lt;<em class="property">typename</em> T, <em class="property">typename</em> FN&gt;<br /><span class="target" id="classpvxs_1_1Value_1a37a6aaac9c56b3bc74d596437e694209"></span>void <code class="descname">as</code><span class="sig-paren">(</span>FN &amp;&amp;<em>fn</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs5Value2asERR2FN" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Attempt to extract value from field. If possible, this value is cast to T and passed as the only argument of the provided function. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs5Value7tryFromERK1T">
+<span id="_CPPv3N4pvxs5Value7tryFromERK1T"></span><span id="_CPPv2N4pvxs5Value7tryFromERK1T"></span><span id="pvxs::Value::tryFrom__TCR"></span><em class="property">template </em>&lt;<em class="property">typename</em> T&gt;<br /><span class="target" id="classpvxs_1_1Value_1a09113ad8095f9d51bafbffd782d2b04a"></span>bool <code class="descname">tryFrom</code><span class="sig-paren">(</span><em class="property">const</em> T &amp;<em>val</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs5Value7tryFromERK1T" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Attempt to assign to field. <dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>false if <a class="reference internal" href="#classpvxs_1_1Value_1a42e5cb69e44597ac1243f909074914de"><span class="std std-ref">from&lt;T&gt;()</span></a> would throw <a class="reference internal" href="#structpvxs_1_1NoField"><span class="std std-ref">NoField</span></a> or <a class="reference internal" href="#structpvxs_1_1NoConvert"><span class="std std-ref">NoConvert</span></a> </dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs5Value4fromERK1T">
+<span id="_CPPv3N4pvxs5Value4fromERK1T"></span><span id="_CPPv2N4pvxs5Value4fromERK1T"></span><span id="pvxs::Value::from__TCR"></span><em class="property">template </em>&lt;<em class="property">typename</em> T&gt;<br /><span class="target" id="classpvxs_1_1Value_1a42e5cb69e44597ac1243f909074914de"></span>void <code class="descname">from</code><span class="sig-paren">(</span><em class="property">const</em> T &amp;<em>val</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs5Value4fromERK1T" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Assign from field.</p>
+<p>Type ‘T’ may be one of:<ul class="simple">
+<li>bool</li>
+<li>uint8_t, uint16_t, uint32_t, uint64_t</li>
+<li>int8_t, int16_t, int32_t, int64_t</li>
+<li>float, double</li>
+<li>std::string</li>
+<li><a class="reference internal" href="#classpvxs_1_1Value"><span class="std std-ref">Value</span></a></li>
+<li>shared_array&lt;const void&gt;</li>
+<li>An enum where the underlying type is one of the preceding (since UNRELEASED). </li>
+</ul>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs5Value6updateE1KRK1T">
+<span id="_CPPv3N4pvxs5Value6updateE1KRK1T"></span><span id="_CPPv2N4pvxs5Value6updateE1KRK1T"></span><span id="pvxs::Value::update__K.TCR"></span><em class="property">template </em>&lt;<em class="property">typename</em> T, <em class="property">typename</em> K&gt;<br /><span class="target" id="classpvxs_1_1Value_1a98e7eccf7857f1ac910673ed61a9e9fd"></span><a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a> &amp;<code class="descname">update</code><span class="sig-paren">(</span>K <em>key</em>, <em class="property">const</em> T &amp;<em>val</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs5Value6updateE1KRK1T" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Inline assignment of sub-field. Shorthand for<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="o">*</span><span class="n">this</span><span class="p">)[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">from</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> 
+</pre></div>
+</div>
+ </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs5ValueaSERK1T">
+<span id="_CPPv3N4pvxs5ValueaSERK1T"></span><span id="_CPPv2N4pvxs5ValueaSERK1T"></span><span id="pvxs::Value::assign-operator__TCR"></span><em class="property">template </em>&lt;<em class="property">typename</em> T&gt;<br /><span class="target" id="classpvxs_1_1Value_1a6962ce7b638b76be5fc715907fba2498"></span><a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a> &amp;<code class="descname">operator=</code><span class="sig-paren">(</span><em class="property">const</em> T &amp;<em>val</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs5ValueaSERK1T" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>shorthand for <a class="reference internal" href="#classpvxs_1_1Value_1a42e5cb69e44597ac1243f909074914de"><span class="std std-ref">from&lt;T&gt;(const T&amp;)</span></a> except for T=<a class="reference internal" href="#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> (would be ambiguous with ref. assignment) </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs5ValueixERKNSt6stringE">
+<span id="_CPPv3N4pvxs5ValueixERKNSt6stringE"></span><span id="_CPPv2N4pvxs5ValueixERKNSt6stringE"></span><span id="pvxs::Value::subscript-operator__ssCR"></span><span class="target" id="classpvxs_1_1Value_1aa94115aaac8fe4e63095ade7e21c24e9"></span><a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a> <code class="descname">operator[]</code><span class="sig-paren">(</span><em class="property">const</em> std::string &amp;<em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs5ValueixERKNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Attempt to access a descendant field.</p>
+<p>Argument may be:<ul class="simple">
+<li>name of a child field. eg. “value”</li>
+<li>name of a descendant field. eg “alarm.severity”</li>
+<li>element of an array of structures. eg “dimension[0]”</li>
+<li>name of a union field. eg. “-&gt;booleanValue”</li>
+</ul>
+</p>
+<p>These may be composed. eg.</p>
+<p><ul class="simple">
+<li>“dimension[0]size”</li>
+<li>”value-&gt;booleanValue”</li>
+</ul>
+</p>
+<p><dl class="docutils">
+<dt><strong>Return</strong></dt>
+<dd>A <a class="reference internal" href="#classpvxs_1_1Value_1a73bc11a2d87d480f088cf12b4baef070"><span class="std std-ref">valid()</span></a> <a class="reference internal" href="#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> if the descendant field exists, otherwise an invalid <a class="reference internal" href="#classpvxs_1_1Value"><span class="std std-ref">Value</span></a>. </dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs5Value6lookupERKNSt6stringE">
+<span id="_CPPv3N4pvxs5Value6lookupERKNSt6stringE"></span><span id="_CPPv2N4pvxs5Value6lookupERKNSt6stringE"></span><span id="pvxs::Value::lookup__ssCR"></span><span class="target" id="classpvxs_1_1Value_1a6e0aac6819b10bde588a0bdb5947cca6"></span><a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a> <code class="descname">lookup</code><span class="sig-paren">(</span><em class="property">const</em> std::string &amp;<em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs5Value6lookupERKNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Attempt to access a descendant field, or throw exception.</p>
+<p>Acts like operator[] on success, but throws a (hopefully descriptive) exception instead of returning an invalid <a class="reference internal" href="#classpvxs_1_1Value"><span class="std std-ref">Value</span></a>.</p>
+<p><dl class="docutils">
+<dt><strong>Exceptions</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal notranslate"><a class="reference internal" href="#structpvxs_1_1LookupError"><span class="std std-ref"><span class="pre">LookupError</span></span></a></code>: If the lookup can not be satisfied </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs5Value8nmembersEv">
+<span id="_CPPv3NK4pvxs5Value8nmembersEv"></span><span id="_CPPv2NK4pvxs5Value8nmembersEv"></span><span id="pvxs::Value::nmembersC"></span><span class="target" id="classpvxs_1_1Value_1a163bf393d72ade6f1554505bc39e3366"></span>size_t <code class="descname">nmembers</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs5Value8nmembersEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Number of child fields. only Struct, StructA, Union, UnionA return non-zero </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs5Value4iallEv">
+<span id="_CPPv3NK4pvxs5Value4iallEv"></span><span id="_CPPv2NK4pvxs5Value4iallEv"></span><span id="pvxs::Value::iallC"></span><span class="target" id="classpvxs_1_1Value_1a018bc90a69b3d4efbf50d136550059f7"></span><a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a>::Iterable&lt;<a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a>::_IAll&gt; <code class="descname">iall</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs5Value4iallEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Depth-first iteration of all descendant fields</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Value</span> <span class="n">top</span><span class="p">(</span><span class="o">...</span><span class="p">);</span>
+<span class="k">for</span><span class="p">(</span><span class="n">auto</span> <span class="n">fld</span> <span class="p">:</span> <span class="n">top</span><span class="o">.</span><span class="n">iall</span><span class="p">())</span> <span class="p">{</span>
+    <span class="n">std</span><span class="p">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">top</span><span class="o">.</span><span class="n">nameOf</span><span class="p">(</span><span class="n">fld</span><span class="p">)</span><span class="o">&lt;&lt;</span><span class="s2">&quot; = &quot;</span><span class="o">&lt;&lt;</span><span class="n">fld</span><span class="o">&lt;&lt;</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+ </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs5Value9ichildrenEv">
+<span id="_CPPv3NK4pvxs5Value9ichildrenEv"></span><span id="_CPPv2NK4pvxs5Value9ichildrenEv"></span><span id="pvxs::Value::ichildrenC"></span><span class="target" id="classpvxs_1_1Value_1ad33c4951b04a80a62566f3668294c542"></span><a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a>::Iterable&lt;<a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a>::_IChildren&gt; <code class="descname">ichildren</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs5Value9ichildrenEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>iteration of all child fields </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs5Value7imarkedEv">
+<span id="_CPPv3NK4pvxs5Value7imarkedEv"></span><span id="_CPPv2NK4pvxs5Value7imarkedEv"></span><span id="pvxs::Value::imarkedC"></span><span class="target" id="classpvxs_1_1Value_1a2d4c4c41bc63dfb74831bf5071dbe5b7"></span><a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a>::Iterable&lt;<a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a>::_IMarked&gt; <code class="descname">imarked</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs5Value7imarkedEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Depth-first iteration of all marked descendant fields. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs5Value6formatEv">
+<span id="_CPPv3NK4pvxs5Value6formatEv"></span><span id="_CPPv2NK4pvxs5Value6formatEv"></span><span id="pvxs::Value::formatC"></span><span class="target" id="classpvxs_1_1Value_1a2651791bddccdfcb5cb54edd22a8e1aa"></span><a class="reference internal" href="#_CPPv4N4pvxs5Value3FmtE" title="pvxs::Value::Fmt">Fmt</a> <code class="descname">format</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs5Value6formatEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Configurable printing via std::ostream</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Value</span> <span class="n">val</span><span class="p">;</span>
+<span class="n">std</span><span class="p">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">val</span><span class="o">.</span><span class="n">format</span><span class="p">()</span><span class="o">.</span><span class="n">arrayLimit</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
+</pre></div>
+</div>
+ </p>
+</dd></dl>
+
+</div>
+<dl class="class">
+<dt id="_CPPv4N4pvxs5Value3FmtE">
+<span id="_CPPv3N4pvxs5Value3FmtE"></span><span id="_CPPv2N4pvxs5Value3FmtE"></span><span id="pvxs::Value::Fmt"></span><span class="target" id="structpvxs_1_1Value_1_1Fmt"></span><em class="property">struct </em><code class="descname">Fmt</code><a class="headerlink" href="#_CPPv4N4pvxs5Value3FmtE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Provides options to control printing of a <a class="reference internal" href="#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> via std::ostream. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Public Functions</p>
+<dl class="function">
+<dt id="_CPPv4N4pvxs5Value3Fmt4treeEv">
+<span id="_CPPv3N4pvxs5Value3Fmt4treeEv"></span><span id="_CPPv2N4pvxs5Value3Fmt4treeEv"></span><span id="pvxs::Value::Fmt::tree"></span><span class="target" id="structpvxs_1_1Value_1_1Fmt_1ae4634a8f708adb1c091b2561448d689d"></span><a class="reference internal" href="#_CPPv4N4pvxs5Value3FmtE" title="pvxs::Value::Fmt">Fmt</a> &amp;<code class="descname">tree</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs5Value3Fmt4treeEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Show <a class="reference internal" href="#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> in tree/struct format. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs5Value3Fmt5deltaEv">
+<span id="_CPPv3N4pvxs5Value3Fmt5deltaEv"></span><span id="_CPPv2N4pvxs5Value3Fmt5deltaEv"></span><span id="pvxs::Value::Fmt::delta"></span><span class="target" id="structpvxs_1_1Value_1_1Fmt_1a66587deb1a82f0625f8ec61b1113ea5d"></span><a class="reference internal" href="#_CPPv4N4pvxs5Value3FmtE" title="pvxs::Value::Fmt">Fmt</a> &amp;<code class="descname">delta</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs5Value3Fmt5deltaEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Show <a class="reference internal" href="#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> in delta format. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs5Value3Fmt6formatE8format_t">
+<span id="_CPPv3N4pvxs5Value3Fmt6formatE8format_t"></span><span id="_CPPv2N4pvxs5Value3Fmt6formatE8format_t"></span><span id="pvxs::Value::Fmt::format__format_t"></span><span class="target" id="structpvxs_1_1Value_1_1Fmt_1a4ea6ada5788175e7ce462a5d432a98e8"></span><a class="reference internal" href="#_CPPv4N4pvxs5Value3FmtE" title="pvxs::Value::Fmt">Fmt</a> &amp;<code class="descname">format</code><span class="sig-paren">(</span>format_t <em>f</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs5Value3Fmt6formatE8format_t" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Explicitly select format_t. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs5Value3Fmt9showValueEb">
+<span id="_CPPv3N4pvxs5Value3Fmt9showValueEb"></span><span id="_CPPv2N4pvxs5Value3Fmt9showValueEb"></span><span id="pvxs::Value::Fmt::showValue__b"></span><span class="target" id="structpvxs_1_1Value_1_1Fmt_1a5450bb796c8084f7311b437d287bced1"></span><a class="reference internal" href="#_CPPv4N4pvxs5Value3FmtE" title="pvxs::Value::Fmt">Fmt</a> &amp;<code class="descname">showValue</code><span class="sig-paren">(</span>bool <em>v</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs5Value3Fmt9showValueEb" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Whether to show field values, or only type information. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs5Value3Fmt10arrayLimitE6size_t">
+<span id="_CPPv3N4pvxs5Value3Fmt10arrayLimitE6size_t"></span><span id="_CPPv2N4pvxs5Value3Fmt10arrayLimitE6size_t"></span><span id="pvxs::Value::Fmt::arrayLimit__s"></span><span class="target" id="structpvxs_1_1Value_1_1Fmt_1a54080d22d52cb8238baae8f5baa5433e"></span><a class="reference internal" href="#_CPPv4N4pvxs5Value3FmtE" title="pvxs::Value::Fmt">Fmt</a> &amp;<code class="descname">arrayLimit</code><span class="sig-paren">(</span>size_t <em>cnt</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs5Value3Fmt10arrayLimitE6size_t" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>When non-zero, arrays output will be truncated with “…” after cnt elements. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv4N4pvxs7NoFieldE">
+<span id="_CPPv3N4pvxs7NoFieldE"></span><span id="_CPPv2N4pvxs7NoFieldE"></span><span id="pvxs::NoField"></span><span class="target" id="structpvxs_1_1NoField"></span><em class="property">struct </em><code class="descname">NoField</code> : <em class="property">public</em> runtime_error<a class="headerlink" href="#_CPPv4N4pvxs7NoFieldE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Thrown when accessing a Null <a class="reference internal" href="#classpvxs_1_1Value"><span class="std std-ref">Value</span></a>. </p>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv4N4pvxs9NoConvertE">
+<span id="_CPPv3N4pvxs9NoConvertE"></span><span id="_CPPv2N4pvxs9NoConvertE"></span><span id="pvxs::NoConvert"></span><span class="target" id="structpvxs_1_1NoConvert"></span><em class="property">struct </em><code class="descname">NoConvert</code> : <em class="property">public</em> runtime_error<a class="headerlink" href="#_CPPv4N4pvxs9NoConvertE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Thrown when a <a class="reference internal" href="#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> can not be converted to the requested type. </p>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv4N4pvxs11LookupErrorE">
+<span id="_CPPv3N4pvxs11LookupErrorE"></span><span id="_CPPv2N4pvxs11LookupErrorE"></span><span id="pvxs::LookupError"></span><span class="target" id="structpvxs_1_1LookupError"></span><em class="property">struct </em><code class="descname">LookupError</code> : <em class="property">public</em> runtime_error<a class="headerlink" href="#_CPPv4N4pvxs11LookupErrorE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+<div class="section" id="array-fields">
+<h2>Array fields<a class="headerlink" href="#array-fields" title="Permalink to this headline">¶</a></h2>
+<p>Array fields are represented with the <a class="reference internal" href="#_CPPv4N4pvxs12shared_arrayE" title="pvxs::shared_array"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::shared_array</span></code></a> container
+using void vs. non-void, and const vs. non-const element types.</p>
+<p>Arrays are initially created as non-const and non-void.
+After being populated, an array must be transformed using
+<a class="reference internal" href="#_CPPv4N4pvxs12shared_array6freezeEv" title="pvxs::shared_array::freeze"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::shared_array::freeze()</span></code></a> to become const before
+being stored in a <a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value</span></code></a>.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">shared_array</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">arr</span><span class="p">({</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">});</span>
+<span class="n">Value</span> <span class="n">top</span> <span class="o">=</span> <span class="n">nt</span><span class="o">::</span><span class="n">NTScalar</span><span class="p">{</span><span class="n">TypeCode</span><span class="o">::</span><span class="n">Float64A</span><span class="p">}.</span><span class="n">create</span><span class="p">();</span>
+
+<span class="n">top</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">arr</span><span class="p">.</span><span class="n">freeze</span><span class="p">();</span>
+<span class="cp"># freeze() acts like std::move().  arr is now empty</span>
+<span class="cp"># only the read-only reference remains!</span>
+</pre></div>
+</div>
+<p>The <a class="reference internal" href="#_CPPv4N4pvxs12shared_array6freezeEv" title="pvxs::shared_array::freeze"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::shared_array::freeze()</span></code></a> method is special in that it
+acts like std::move() in that it moves the array reference into the returned object.
+freeze() requires exclusive ownership of the reference being frozen.
+An exception will be thrown unless <a class="reference internal" href="#_CPPv4NK4pvxs12shared_array6uniqueEv" title="pvxs::shared_array::unique"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::shared_array::unique()</span></code></a> would return true.</p>
+<p>Array values may be extracted from <a class="reference internal" href="#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value</span></code></a> as either const void or const non-void.
+The const non-void option is a convenience which may <strong>allocate</strong> and do an element by element conversion.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp"># extract reference, or converted copy</span>
+<span class="n">arr</span> <span class="o">=</span> <span class="n">top</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="n">shared_array</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">double</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>When it is desirable to avoid an implicit allocate and convert,
+an array can be extracted as “const void”.
+This does require calling <a class="reference internal" href="#_CPPv4NK4pvxs12shared_array13original_typeEv" title="pvxs::shared_array::original_type"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::shared_array::original_type()</span></code></a> to find the <a class="reference internal" href="#_CPPv4N4pvxs9ArrayTypeE" title="pvxs::ArrayType"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::ArrayType</span></code></a>
+of the underlying array prior to using <a class="reference internal" href="#_CPPv4NK4pvxs12shared_array6castToEv" title="pvxs::shared_array::castTo"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::shared_array::castTo()</span></code></a>.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="cp"># extract untyped reference.  Never copies</span>
+<span class="n">shared_array</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">void</span><span class="o">&gt;</span> <span class="n">varr</span> <span class="o">=</span> <span class="n">top</span><span class="p">[</span><span class="s">&quot;value&quot;</span><span class="p">].</span><span class="n">as</span><span class="o">&lt;</span><span class="n">shared_array</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">void</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+<span class="k">if</span><span class="p">(</span><span class="n">varr</span><span class="p">.</span><span class="n">original_type</span><span class="p">()</span><span class="o">==</span><span class="n">ArrayType</span><span class="o">::</span><span class="n">Float64</span><span class="p">)</span> <span class="p">{</span>
+    <span class="cp"># castTo() throws std::logic_error if the underlying type is not &#39;double&#39;.</span>
+    <span class="n">shared_array</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">double</span><span class="o">&gt;</span> <span class="n">temp</span> <span class="o">=</span> <span class="n">varr</span><span class="p">.</span><span class="n">castTo</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">double</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<dl class="class">
+<dt id="_CPPv4N4pvxs12shared_arrayE">
+<span id="_CPPv3N4pvxs12shared_arrayE"></span><span id="_CPPv2N4pvxs12shared_arrayE"></span><span id="pvxs::shared_array"></span><span class="target" id="classpvxs_1_1shared__array"></span><em class="property">template </em>&lt;typename <em>E</em>, class <em>Enable</em>&gt;<br /><em class="property">class </em><code class="descname">shared_array</code> : <em class="property">public</em> pvxs::detail::sa_base&lt;E&gt;<a class="headerlink" href="#_CPPv4N4pvxs12shared_arrayE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>std::vector-like contiguous array of items passed by reference.</p>
+<p><a class="reference internal" href="#classpvxs_1_1shared__array"><span class="std std-ref">shared_array</span></a> comes in const and non-const, as well as void and non-void variants.</p>
+<p>A non-const array is allocated and filled, then last non-const reference is exchanged for new const reference. This const reference can then be safely shared between various threads.</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">shared_array</span><span class="o">&lt;</span><span class="n">uint32_t</span><span class="o">&gt;</span> <span class="n">arr</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">});</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">size</span><span class="p">()</span><span class="o">==</span><span class="mi">3</span><span class="p">);</span>
+<span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">const</span> <span class="n">uint32_t</span><span class="o">&gt;</span> <span class="n">constarr</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">freeze</span><span class="p">());</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">size</span><span class="p">()</span><span class="o">==</span><span class="mi">0</span><span class="p">);</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">constarr</span><span class="o">.</span><span class="n">size</span><span class="p">()</span><span class="o">==</span><span class="mi">3</span><span class="p">);</span>
+</pre></div>
+</div>
+</p>
+<p>The void / non-void variants allow arrays to be moved without explicit typing. However, the void variant preserves the original ArrayType.</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">shared_array</span><span class="o">&lt;</span><span class="n">uint32_t</span><span class="o">&gt;</span> <span class="n">arr</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">});</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">size</span><span class="p">()</span><span class="o">==</span><span class="mi">3</span><span class="p">);</span>
+<span class="n">shared_array</span><span class="o">&lt;</span><span class="n">void</span><span class="o">&gt;</span> <span class="n">voidarr</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">castTo</span><span class="o">&lt;</span><span class="n">void</span><span class="o">&gt;</span><span class="p">());</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">size</span><span class="p">()</span><span class="o">==</span><span class="mi">0</span><span class="p">);</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">voidarr</span><span class="o">.</span><span class="n">size</span><span class="p">()</span><span class="o">==</span><span class="mi">3</span><span class="p">);</span> <span class="o">//</span> <span class="n">void</span> <span class="n">size</span><span class="p">()</span> <span class="ow">in</span> <span class="n">elements</span>
+</pre></div>
+</div>
+ </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Public Functions</p>
+<dl class="function">
+<dt id="_CPPv4N4pvxs12shared_array12shared_arrayENSt16initializer_listI1AEE">
+<span id="_CPPv3N4pvxs12shared_array12shared_arrayENSt16initializer_listI1AEE"></span><span id="_CPPv2N4pvxs12shared_array12shared_arrayENSt16initializer_listI1AEE"></span><span id="pvxs::shared_array::shared_array__std::initializer_list:A:"></span><em class="property">template </em>&lt;<em class="property">typename</em> A&gt;<br /><span class="target" id="classpvxs_1_1shared__array_1a2c28624d46a696d8e4328d3eb75027aa"></span><code class="descname">shared_array</code><span class="sig-paren">(</span>std::initializer_list&lt;A&gt; <em>L</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs12shared_array12shared_arrayENSt16initializer_listI1AEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>allocate new array and populate from initializer list </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs12shared_array12shared_arrayE4Iter4Iter">
+<span id="_CPPv3N4pvxs12shared_array12shared_arrayE4Iter4Iter"></span><span id="_CPPv2N4pvxs12shared_array12shared_arrayE4Iter4Iter"></span><span id="pvxs::shared_array::shared_array__Iter.Iter"></span><em class="property">template </em>&lt;<em class="property">typename</em> Iter, <em class="property">typename</em> std::iterator_traits&lt; Iter &gt;::difference_type = 0&gt;<br /><span class="target" id="classpvxs_1_1shared__array_1aeb17d9cf91716e4f6d1408809d9c05ee"></span><code class="descname">shared_array</code><span class="sig-paren">(</span>Iter <em>begin</em>, Iter <em>end</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs12shared_array12shared_arrayE4Iter4Iter" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Construct a copy of another a sequence. Requires random access iterators. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs12shared_array12shared_arrayE6size_t">
+<span id="_CPPv3N4pvxs12shared_array12shared_arrayE6size_t"></span><span id="_CPPv2N4pvxs12shared_array12shared_arrayE6size_t"></span><span id="pvxs::shared_array::shared_array__s"></span><span class="target" id="classpvxs_1_1shared__array_1a295e401598df74b499ea493c17088e85"></span><code class="descname">shared_array</code><span class="sig-paren">(</span>size_t <em>c</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs12shared_array12shared_arrayE6size_t" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Allocate (with new[]) a new vector of size c. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs12shared_array12shared_arrayE6size_t1V">
+<span id="_CPPv3N4pvxs12shared_array12shared_arrayE6size_t1V"></span><span id="_CPPv2N4pvxs12shared_array12shared_arrayE6size_t1V"></span><span id="pvxs::shared_array::shared_array__s.V"></span><em class="property">template </em>&lt;<em class="property">typename</em> V&gt;<br /><span class="target" id="classpvxs_1_1shared__array_1abb06f542470639ac52692cb011b6345b"></span><code class="descname">shared_array</code><span class="sig-paren">(</span>size_t <em>c</em>, V <em>e</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs12shared_array12shared_arrayE6size_t1V" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Allocate (with new[]) a new vector of size c and fill with value e. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs12shared_array12shared_arrayEP1E6size_t">
+<span id="_CPPv3N4pvxs12shared_array12shared_arrayEP1E6size_t"></span><span id="_CPPv2N4pvxs12shared_array12shared_arrayEP1E6size_t"></span><span id="pvxs::shared_array::shared_array__EP.s"></span><span class="target" id="classpvxs_1_1shared__array_1a6c1eb74878ef14b41d31719d3bd8b3ba"></span><code class="descname">shared_array</code><span class="sig-paren">(</span>E *<em>a</em>, size_t <em>len</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs12shared_array12shared_arrayEP1E6size_t" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>use existing alloc with delete[] </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs12shared_array12shared_arrayEP1E1B6size_t">
+<span id="_CPPv3N4pvxs12shared_array12shared_arrayEP1E1B6size_t"></span><span id="_CPPv2N4pvxs12shared_array12shared_arrayEP1E1B6size_t"></span><span id="pvxs::shared_array::shared_array__EP.B.s"></span><em class="property">template </em>&lt;<em class="property">typename</em> B&gt;<br /><span class="target" id="classpvxs_1_1shared__array_1a0479a2e53c1b3be56674268973ae2bb6"></span><code class="descname">shared_array</code><span class="sig-paren">(</span>E *<em>a</em>, B <em>b</em>, size_t <em>len</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs12shared_array12shared_arrayEP1E1B6size_t" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>use existing alloc w/ custom deletor </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs12shared_array12shared_arrayERKNSt10shared_ptrI1EEE6size_t">
+<span id="_CPPv3N4pvxs12shared_array12shared_arrayERKNSt10shared_ptrI1EEE6size_t"></span><span id="_CPPv2N4pvxs12shared_array12shared_arrayERKNSt10shared_ptrI1EEE6size_t"></span><span id="pvxs::shared_array::shared_array__std::shared_ptr:E:CR.s"></span><span class="target" id="classpvxs_1_1shared__array_1a0daee5e007b7ca04859ce6b0874bfdbf"></span><code class="descname">shared_array</code><span class="sig-paren">(</span><em class="property">const</em> std::shared_ptr&lt;E&gt; &amp;<em>a</em>, size_t <em>len</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs12shared_array12shared_arrayERKNSt10shared_ptrI1EEE6size_t" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>build around existing shared_ptr </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs12shared_array12shared_arrayERKNSt10shared_ptrI1AEEP1E6size_t">
+<span id="_CPPv3N4pvxs12shared_array12shared_arrayERKNSt10shared_ptrI1AEEP1E6size_t"></span><span id="_CPPv2N4pvxs12shared_array12shared_arrayERKNSt10shared_ptrI1AEEP1E6size_t"></span><span id="pvxs::shared_array::shared_array__std::shared_ptr:A:CR.EP.s"></span><em class="property">template </em>&lt;<em class="property">typename</em> A&gt;<br /><span class="target" id="classpvxs_1_1shared__array_1a12d423b31e62a3fba5fa33c6a6ecda97"></span><code class="descname">shared_array</code><span class="sig-paren">(</span><em class="property">const</em> std::shared_ptr&lt;A&gt; &amp;<em>a</em>, E *<em>b</em>, size_t <em>len</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs12shared_array12shared_arrayERKNSt10shared_ptrI1AEEP1E6size_t" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>alias existing <a class="reference internal" href="#classpvxs_1_1shared__array"><span class="std std-ref">shared_array</span></a> </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs12shared_array4sizeEv">
+<span id="_CPPv3NK4pvxs12shared_array4sizeEv"></span><span id="_CPPv2NK4pvxs12shared_array4sizeEv"></span><span id="pvxs::shared_array::sizeC"></span><span class="target" id="classpvxs_1_1shared__array_1ae339e8bd0c24a39d37c73d52c7d93c85"></span>size_t <code class="descname">size</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs12shared_array4sizeEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Number of elements. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs12shared_array5emptyEv">
+<span id="_CPPv3NK4pvxs12shared_array5emptyEv"></span><span id="_CPPv2NK4pvxs12shared_array5emptyEv"></span><span id="pvxs::shared_array::emptyC"></span><span class="target" id="classpvxs_1_1shared__array_1a7790230ae32157ad1ef540740961ff3f"></span>bool <code class="descname">empty</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs12shared_array5emptyEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p><a class="reference internal" href="#classpvxs_1_1shared__array_1ae339e8bd0c24a39d37c73d52c7d93c85"><span class="std std-ref">size()</span></a>==0 </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs12shared_array6uniqueEv">
+<span id="_CPPv3NK4pvxs12shared_array6uniqueEv"></span><span id="_CPPv2NK4pvxs12shared_array6uniqueEv"></span><span id="pvxs::shared_array::uniqueC"></span><span class="target" id="classpvxs_1_1shared__array_1a588ede627ee3fa75a1cfccd5ee26cd8f"></span>bool <code class="descname">unique</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs12shared_array6uniqueEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>True if this instance is the only (strong) reference. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs12shared_array5clearEv">
+<span id="_CPPv3N4pvxs12shared_array5clearEv"></span><span id="_CPPv2N4pvxs12shared_array5clearEv"></span><span id="pvxs::shared_array::clear"></span><span class="target" id="classpvxs_1_1shared__array_1ad1efe16b55e1b27ba57e0e77e08272bb"></span>void <code class="descname">clear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs12shared_array5clearEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Reset <a class="reference internal" href="#classpvxs_1_1shared__array_1ae339e8bd0c24a39d37c73d52c7d93c85"><span class="std std-ref">size()</span></a>==0. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs12shared_array4swapER12shared_array">
+<span id="_CPPv3N4pvxs12shared_array4swapER12shared_array"></span><span id="_CPPv2N4pvxs12shared_array4swapER12shared_array"></span><span id="pvxs::shared_array::swap__shared_arrayR"></span><span class="target" id="classpvxs_1_1shared__array_1a232dc8640fda9b15c567c50101bd9a3e"></span>void <code class="descname">swap</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4pvxs12shared_arrayE" title="pvxs::shared_array">shared_array</a> &amp;<em>o</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs12shared_array4swapER12shared_array" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Exchange contents with other. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs12shared_array4dataEv">
+<span id="_CPPv3NK4pvxs12shared_array4dataEv"></span><span id="_CPPv2NK4pvxs12shared_array4dataEv"></span><span id="pvxs::shared_array::dataC"></span><span class="target" id="classpvxs_1_1shared__array_1ac1a04e9e3e4b49bc8809b35dd811e16c"></span>E *<code class="descname">data</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs12shared_array4dataEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Access to raw pointer. May be nullptr if <a class="reference internal" href="#classpvxs_1_1shared__array_1ae339e8bd0c24a39d37c73d52c7d93c85"><span class="std std-ref">size()</span></a>==0 </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs12shared_array6resizeE6size_t">
+<span id="_CPPv3N4pvxs12shared_array6resizeE6size_t"></span><span id="_CPPv2N4pvxs12shared_array6resizeE6size_t"></span><span id="pvxs::shared_array::resize__s"></span><span class="target" id="classpvxs_1_1shared__array_1ad4c27892e4018a6cb0d21dce147c5968"></span>void <code class="descname">resize</code><span class="sig-paren">(</span>size_t <em>i</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs12shared_array6resizeE6size_t" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Extend size. Implies <a class="reference internal" href="#classpvxs_1_1shared__array_1a3c57a308e0002fc774765fd8f33f101b"><span class="std std-ref">make_unique()</span></a> </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs12shared_array11make_uniqueEv">
+<span id="_CPPv3N4pvxs12shared_array11make_uniqueEv"></span><span id="_CPPv2N4pvxs12shared_array11make_uniqueEv"></span><span id="pvxs::shared_array::make_unique"></span><span class="target" id="classpvxs_1_1shared__array_1a3c57a308e0002fc774765fd8f33f101b"></span>void <code class="descname">make_unique</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs12shared_array11make_uniqueEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Ensure exclusive ownership of array data. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs12shared_array5beginEv">
+<span id="_CPPv3NK4pvxs12shared_array5beginEv"></span><span id="_CPPv2NK4pvxs12shared_array5beginEv"></span><span id="pvxs::shared_array::beginC"></span><span class="target" id="classpvxs_1_1shared__array_1ab07e7c14de7b3016963f66c382e501b2"></span>iterator <code class="descname">begin</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs12shared_array5beginEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>begin iteration </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs12shared_array3endEv">
+<span id="_CPPv3NK4pvxs12shared_array3endEv"></span><span id="_CPPv2NK4pvxs12shared_array3endEv"></span><span id="pvxs::shared_array::endC"></span><span class="target" id="classpvxs_1_1shared__array_1a49558a3736e1f632e7b604ede673b364"></span>iterator <code class="descname">end</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs12shared_array3endEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>end iteration </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs12shared_arrayixE6size_t">
+<span id="_CPPv3NK4pvxs12shared_arrayixE6size_t"></span><span id="_CPPv2NK4pvxs12shared_arrayixE6size_t"></span><span id="pvxs::shared_array::subscript-operator__sC"></span><span class="target" id="classpvxs_1_1shared__array_1af31efb88e44db5902e166392901e966b"></span>reference <code class="descname">operator[]</code><span class="sig-paren">(</span>size_t <em>i</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs12shared_arrayixE6size_t" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p><a class="reference internal" href="typedef.html#structpvxs_1_1Member"><span class="std std-ref">Member</span></a> access Use sa.data() instead of &amp;sa[0]. </p>
+<p><dl class="docutils">
+<dt><strong>Pre</strong></dt>
+<dd>!empty() &amp;&amp; i&lt;<a class="reference internal" href="#classpvxs_1_1shared__array_1ae339e8bd0c24a39d37c73d52c7d93c85"><span class="std std-ref">size()</span></a> </dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs12shared_array2atE6size_t">
+<span id="_CPPv3NK4pvxs12shared_array2atE6size_t"></span><span id="_CPPv2NK4pvxs12shared_array2atE6size_t"></span><span id="pvxs::shared_array::at__sC"></span><span class="target" id="classpvxs_1_1shared__array_1a78d64fd47cf76b0f0d676b2f96aa731e"></span>reference <code class="descname">at</code><span class="sig-paren">(</span>size_t <em>i</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs12shared_array2atE6size_t" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p><a class="reference internal" href="typedef.html#structpvxs_1_1Member"><span class="std std-ref">Member</span></a> access. </p>
+<p><dl class="docutils">
+<dt><strong>Exceptions</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal notranslate"><span class="pre">std::out_of_range</span></code>: if <a class="reference internal" href="#classpvxs_1_1shared__array_1a7790230ae32157ad1ef540740961ff3f"><span class="std std-ref">empty()</span></a> || i&gt;=<a class="reference internal" href="#classpvxs_1_1shared__array_1ae339e8bd0c24a39d37c73d52c7d93c85"><span class="std std-ref">size()</span></a>. </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs12shared_array6freezeEv">
+<span id="_CPPv3N4pvxs12shared_array6freezeEv"></span><span id="_CPPv2N4pvxs12shared_array6freezeEv"></span><span id="pvxs::shared_array::freeze"></span><span class="target" id="classpvxs_1_1shared__array_1a33b8c659c84b5936b1b58a301fc1d391"></span><a class="reference internal" href="#_CPPv4N4pvxs12shared_arrayE" title="pvxs::shared_array">shared_array</a>&lt;<em class="property">typename</em> std::add_const&lt;E&gt;::type&gt; <code class="descname">freeze</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs12shared_array6freezeEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Cast to const, consuming this <dl class="docutils">
+<dt><strong>Pre</strong></dt>
+<dd><a class="reference internal" href="#classpvxs_1_1shared__array_1a588ede627ee3fa75a1cfccd5ee26cd8f"><span class="std std-ref">unique()</span></a>==true </dd>
+<dt><strong>Post</strong></dt>
+<dd><a class="reference internal" href="#classpvxs_1_1shared__array_1a7790230ae32157ad1ef540740961ff3f"><span class="std std-ref">empty()</span></a>==true </dd>
+<dt><strong>Exceptions</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal notranslate"><span class="pre">std::logic_error</span></code>: if !unique() </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs12shared_array6castToEv">
+<span id="_CPPv3NK4pvxs12shared_array6castToEv"></span><span id="_CPPv2NK4pvxs12shared_array6castToEv"></span><span id="pvxs::shared_array::castToC"></span><em class="property">template </em>&lt;<em class="property">typename</em> TO&gt;<br /><span class="target" id="classpvxs_1_1shared__array_1a4685d929c69abff5cce7c9d832e6b60b"></span><a class="reference internal" href="#_CPPv4N4pvxs12shared_arrayE" title="pvxs::shared_array">shared_array</a>&lt;TO&gt; <code class="descname">castTo</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs12shared_array6castToEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Cast to/from void, preserving const-ness.</p>
+<p>A “safe” version of static_cast&lt;&gt;()</p>
+<p>Allowed casts depend upon two aspects of type parameter E.</p>
+<p>Whether the base type is void or non-void. And whether or not the const qualifier is present.</p>
+<p>Type E may always be cast to itself.</p>
+<p>Casts must preseve const-ness. Either both of E and TO, or neither, must be const qualified.</p>
+<p>At most one of E or TO may have different non-void base type.</p>
+<p><dl class="docutils">
+<dt><strong>Exceptions</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal notranslate"><span class="pre">std::logic_error</span></code>: on void -&gt; non-void cast when requested type and the <a class="reference internal" href="#classpvxs_1_1shared__array_1ad74ef94b8c1aaa7f46d768ba6e9be933"><span class="std std-ref">original_type()</span></a> do not match. </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs12shared_array9convertToEv">
+<span id="_CPPv3NK4pvxs12shared_array9convertToEv"></span><span id="_CPPv2NK4pvxs12shared_array9convertToEv"></span><span id="pvxs::shared_array::convertToC"></span><em class="property">template </em>&lt;<em class="property">typename</em> TO&gt;<br /><span class="target" id="classpvxs_1_1shared__array_1abfbb4f53ac356b2e5acfad4116a393f8"></span><a class="reference internal" href="#_CPPv4N4pvxs12shared_arrayE" title="pvxs::shared_array">shared_array</a>&lt;TO&gt; <code class="descname">convertTo</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs12shared_array9convertToEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Cast with fallback to copy. Preserves const-ness</p>
+<p>Return either a reference or a copy of this array. A copy will be made if the requested type and the <a class="reference internal" href="#classpvxs_1_1shared__array_1ad74ef94b8c1aaa7f46d768ba6e9be933"><span class="std std-ref">original_type()</span></a> do not match. Otherwise functions like <a class="reference internal" href="#classpvxs_1_1shared__array_1a4685d929c69abff5cce7c9d832e6b60b"><span class="std std-ref">castTo()</span></a>. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs12shared_array6formatEv">
+<span id="_CPPv3NK4pvxs12shared_array6formatEv"></span><span id="_CPPv2NK4pvxs12shared_array6formatEv"></span><span id="pvxs::shared_array::formatC"></span><span class="target" id="classpvxs_1_1shared__array_1ae7b1d8adcf3973d7c3a319612a2a39b7"></span>detail::<a class="reference internal" href="#_CPPv4N4pvxs6detail7LimiterE" title="pvxs::detail::Limiter">Limiter</a> <code class="descname">format</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs12shared_array6formatEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Provide options when rendering with std::ostream.</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">shared_array</span><span class="o">&lt;</span><span class="n">int32_t</span><span class="o">&gt;</span> <span class="n">arr</span><span class="p">({</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">});</span>
+<span class="o">//</span> <span class="nb">print</span> <span class="n">entire</span> <span class="n">array</span>
+<span class="o">//</span>   <span class="p">{</span><span class="mi">4</span><span class="p">}[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">]</span>
+<span class="n">std</span><span class="p">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">arr</span><span class="p">;</span>
+<span class="o">//</span> <span class="nb">print</span> <span class="n">at</span> <span class="n">most</span> <span class="mi">3</span> <span class="n">elements</span>
+<span class="o">//</span>   <span class="p">{</span><span class="mi">4</span><span class="p">}[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="o">...</span><span class="p">]</span>
+<span class="n">std</span><span class="p">::</span><span class="n">cout</span><span class="o">&lt;&lt;</span><span class="n">arr</span><span class="o">.</span><span class="n">format</span><span class="p">()</span><span class="o">.</span><span class="n">limit</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span>
+</pre></div>
+</div>
+ </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs12shared_array13original_typeEv">
+<span id="_CPPv3NK4pvxs12shared_array13original_typeEv"></span><span id="_CPPv2NK4pvxs12shared_array13original_typeEv"></span><span id="pvxs::shared_array::original_typeC"></span><span class="target" id="classpvxs_1_1shared__array_1ad74ef94b8c1aaa7f46d768ba6e9be933"></span><a class="reference internal" href="#_CPPv4N4pvxs9ArrayTypeE" title="pvxs::ArrayType">ArrayType</a> <code class="descname">original_type</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs12shared_array13original_typeEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>return type of underlying array. (void only) </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs11elementSizeE9ArrayType">
+<span id="_CPPv3N4pvxs11elementSizeE9ArrayType"></span><span id="_CPPv2N4pvxs11elementSizeE9ArrayType"></span><span id="pvxs::elementSize__ArrayType"></span><span class="target" id="namespacepvxs_1a316c63e394611c8b5945aa7691979c86"></span>size_t <code class="descclassname">pvxs<code class="descclassname">::</code></code><code class="descname">elementSize</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4pvxs9ArrayTypeE" title="pvxs::ArrayType">ArrayType</a> <em>type</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs11elementSizeE9ArrayType" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Return storage size (aka. sizeof() ) for array element type <dl class="docutils">
+<dt><strong>Exceptions</strong></dt>
+<dd><ul class="breatheparameterlist first last simple">
+<li><code class="docutils literal notranslate"><span class="pre">std::logic_error</span></code>: for invalid types. </li>
+</ul>
+</dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv4N4pvxs6detail7LimiterE">
+<span id="_CPPv3N4pvxs6detail7LimiterE"></span><span id="_CPPv2N4pvxs6detail7LimiterE"></span><span id="pvxs::detail::Limiter"></span><span class="target" id="classpvxs_1_1detail_1_1Limiter"></span><em class="property">class </em><code class="descname">Limiter</code><a class="headerlink" href="#_CPPv4N4pvxs6detail7LimiterE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Provide options when rendering with std::ostream. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Public Functions</p>
+<dl class="function">
+<dt id="_CPPv4N4pvxs6detail7Limiter5limitE6size_t">
+<span id="_CPPv3N4pvxs6detail7Limiter5limitE6size_t"></span><span id="_CPPv2N4pvxs6detail7Limiter5limitE6size_t"></span><span id="pvxs::detail::Limiter::limit__s"></span><span class="target" id="classpvxs_1_1detail_1_1Limiter_1af2360cfbcbaa430c43210bcf7293d1e1"></span><a class="reference internal" href="#_CPPv4N4pvxs6detail7LimiterE" title="pvxs::detail::Limiter">Limiter</a> &amp;<code class="descname">limit</code><span class="sig-paren">(</span>size_t <em>l</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6detail7Limiter5limitE6size_t" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Maximum number of array elements to print. “…” is printed in place of any further elements. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="type">
+<dt id="_CPPv4N4pvxs9ArrayTypeE">
+<span id="_CPPv3N4pvxs9ArrayTypeE"></span><span id="_CPPv2N4pvxs9ArrayTypeE"></span><span id="pvxs::ArrayType"></span><span class="target" id="namespacepvxs_1a4306b789c292c30f1403762fde00e60e"></span><em class="property">enum </em><code class="descclassname">pvxs<code class="descclassname">::</code></code><code class="descname">ArrayType</code><a class="headerlink" href="#_CPPv4N4pvxs9ArrayTypeE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Identify real array type in void specializations of <a class="reference internal" href="#classpvxs_1_1shared__array"><span class="std std-ref">shared_array</span></a>. <dl class="docutils">
+<dt><strong>See</strong></dt>
+<dd><a class="reference internal" href="#classpvxs_1_1shared__array_1ad74ef94b8c1aaa7f46d768ba6e9be933"><span class="std std-ref">shared_array::original_type()</span></a> </dd>
+</dl>
+</p>
+<p><em>Values:</em></p>
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs4NullE">
+<span id="_CPPv3N4pvxs4NullE"></span><span id="_CPPv2N4pvxs4NullE"></span><span class="target" id="namespacepvxs_1a4306b789c292c30f1403762fde00e60eabbb93ef26e3c101ff11cdd21cab08a94"></span><code class="descname">Null</code> = 0xff<a class="headerlink" href="#_CPPv4N4pvxs4NullE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Untyped. </p>
+</dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs4BoolE">
+<span id="_CPPv3N4pvxs4BoolE"></span><span id="_CPPv2N4pvxs4BoolE"></span><span class="target" id="namespacepvxs_1a4306b789c292c30f1403762fde00e60eac26f15e86e3de4c398a8273272aba034"></span><code class="descname">Bool</code> = 0x08<a class="headerlink" href="#_CPPv4N4pvxs4BoolE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>bool </p>
+</dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs4Int8E">
+<span id="_CPPv3N4pvxs4Int8E"></span><span id="_CPPv2N4pvxs4Int8E"></span><span class="target" id="namespacepvxs_1a4306b789c292c30f1403762fde00e60ea7d839b2c12bfd40ac121b4cc9e81c539"></span><code class="descname">Int8</code> = 0x28<a class="headerlink" href="#_CPPv4N4pvxs4Int8E" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>int8_t </p>
+</dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs5Int16E">
+<span id="_CPPv3N4pvxs5Int16E"></span><span id="_CPPv2N4pvxs5Int16E"></span><span class="target" id="namespacepvxs_1a4306b789c292c30f1403762fde00e60ea39bc2ae44b184207f560ff8619823208"></span><code class="descname">Int16</code> = 0x29<a class="headerlink" href="#_CPPv4N4pvxs5Int16E" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>int16_t </p>
+</dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs5Int32E">
+<span id="_CPPv3N4pvxs5Int32E"></span><span id="_CPPv2N4pvxs5Int32E"></span><span class="target" id="namespacepvxs_1a4306b789c292c30f1403762fde00e60eac06129f6e6e15c09328365e553f1dc31"></span><code class="descname">Int32</code> = 0x2a<a class="headerlink" href="#_CPPv4N4pvxs5Int32E" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>int32_t </p>
+</dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs5Int64E">
+<span id="_CPPv3N4pvxs5Int64E"></span><span id="_CPPv2N4pvxs5Int64E"></span><span class="target" id="namespacepvxs_1a4306b789c292c30f1403762fde00e60eafbde23b11d7e59af7828e81144c8b487"></span><code class="descname">Int64</code> = 0x2b<a class="headerlink" href="#_CPPv4N4pvxs5Int64E" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>int64_t </p>
+</dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs5UInt8E">
+<span id="_CPPv3N4pvxs5UInt8E"></span><span id="_CPPv2N4pvxs5UInt8E"></span><span class="target" id="namespacepvxs_1a4306b789c292c30f1403762fde00e60eab31df9c476d20e85ff898121efe11b5a"></span><code class="descname">UInt8</code> = 0x2c<a class="headerlink" href="#_CPPv4N4pvxs5UInt8E" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>uint8_t </p>
+</dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs6UInt16E">
+<span id="_CPPv3N4pvxs6UInt16E"></span><span id="_CPPv2N4pvxs6UInt16E"></span><span class="target" id="namespacepvxs_1a4306b789c292c30f1403762fde00e60ea8bd950a9d7779b83f5c30046c9aaf1cf"></span><code class="descname">UInt16</code> = 0x2d<a class="headerlink" href="#_CPPv4N4pvxs6UInt16E" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>uint16_t </p>
+</dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs6UInt32E">
+<span id="_CPPv3N4pvxs6UInt32E"></span><span id="_CPPv2N4pvxs6UInt32E"></span><span class="target" id="namespacepvxs_1a4306b789c292c30f1403762fde00e60eae7956ed7be1c5025a27ed3cb42a396bd"></span><code class="descname">UInt32</code> = 0x2e<a class="headerlink" href="#_CPPv4N4pvxs6UInt32E" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>uint32_t </p>
+</dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs6UInt64E">
+<span id="_CPPv3N4pvxs6UInt64E"></span><span id="_CPPv2N4pvxs6UInt64E"></span><span class="target" id="namespacepvxs_1a4306b789c292c30f1403762fde00e60eaaf71234725f0470ccf993e263a8b820a"></span><code class="descname">UInt64</code> = 0x2f<a class="headerlink" href="#_CPPv4N4pvxs6UInt64E" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>uint64_t </p>
+</dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs7Float32E">
+<span id="_CPPv3N4pvxs7Float32E"></span><span id="_CPPv2N4pvxs7Float32E"></span><span class="target" id="namespacepvxs_1a4306b789c292c30f1403762fde00e60ea166495adc0d0f53bee6baecc577f5204"></span><code class="descname">Float32</code> =0x4a<a class="headerlink" href="#_CPPv4N4pvxs7Float32E" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>float </p>
+</dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs7Float64E">
+<span id="_CPPv3N4pvxs7Float64E"></span><span id="_CPPv2N4pvxs7Float64E"></span><span class="target" id="namespacepvxs_1a4306b789c292c30f1403762fde00e60ead2b556d8a8f5c8ac323f51a4b82e79a0"></span><code class="descname">Float64</code> =0x4b<a class="headerlink" href="#_CPPv4N4pvxs7Float64E" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>double </p>
+</dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs6StringE">
+<span id="_CPPv3N4pvxs6StringE"></span><span id="_CPPv2N4pvxs6StringE"></span><span class="target" id="namespacepvxs_1a4306b789c292c30f1403762fde00e60ea27118326006d3829667a400ad23d5d98"></span><code class="descname">String</code> = 0x68<a class="headerlink" href="#_CPPv4N4pvxs6StringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>std::string </p>
+</dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs5ValueE">
+<span id="_CPPv3N4pvxs5ValueE"></span><span id="_CPPv2N4pvxs5ValueE"></span><span class="target" id="namespacepvxs_1a4306b789c292c30f1403762fde00e60ea689202409e48743b914713f96d93947c"></span><code class="descname">Value</code> = 0x88<br /></dt>
+<dd><p><a class="reference internal" href="#classpvxs_1_1Value"><span class="std std-ref">Value</span></a>. </p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PVXS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building from Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html#including-pvxs-in-your-application">Including PVXS in your application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Tools</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Value Container</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="nt.html">Common Type Definitions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="typedef.html">Defining Custom Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#value">Value</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#field-lookup">Field Lookup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#iteration">Iteration</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#array-fields">Array fields</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="server.html">Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">Misc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="details.html">Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasenotes.html">Release Notes</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="cli.html" title="previous chapter">Command Line Tools</a></li>
+      <li>Next: <a href="nt.html" title="next chapter">Common Type Definitions</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021 Osprey DCS LLC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="_sources/value.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

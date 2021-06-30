@@ -1,0 +1,555 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Defining Custom Types &#8212; PVXS 0.2.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Client" href="client.html" />
+    <link rel="prev" title="NTScalar and NTScalarArray" href="ntscalar.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="defining-custom-types">
+<span id="typedefapi"></span><h1>Defining Custom Types<a class="headerlink" href="#defining-custom-types" title="Permalink to this headline">¶</a></h1>
+<p>Interface through which type definitions are created and extended for use with <a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value</span></code></a>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#include &lt;pvxs/data.h&gt;</span>
+<span class="n">namespace</span> <span class="n">pvxs</span> <span class="p">{</span> <span class="o">...</span> <span class="p">}</span>
+</pre></div>
+</div>
+<p>The type system of the PVA protocol consists of a number of primative and compound types,
+as well as arrays of either.
+The <a class="reference internal" href="#_CPPv4N4pvxs8TypeCode6code_tE" title="pvxs::TypeCode::code_t"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::TypeCode::code_t</span></code></a> enum is an exhaustive list of all valid types,
+as well as Null.</p>
+<p>Any valid type may be instanciate directly.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="n">Value</span> <span class="n">v</span> <span class="o">=</span> <span class="n">TypeDef</span><span class="p">{</span><span class="n">TypeCode</span><span class="o">::</span><span class="n">String</span><span class="p">}.</span><span class="n">create</span><span class="p">();</span>
+<span class="n">v</span> <span class="o">=</span> <span class="s">&quot;works, but not very interesting&quot;</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>In almost all cases, custom type definitions will be for Structures.
+When defining structures, the functions of the <a class="reference internal" href="#_CPPv4N4pvxs7membersE" title="pvxs::members"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::members</span></code></a> namespace can help to keep definitions concise.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">namespace</span> <span class="n">M</span> <span class="o">=</span> <span class="n">pvxs</span><span class="o">::</span><span class="n">members</span><span class="p">;</span>
+
+<span class="n">Value</span> <span class="n">v</span> <span class="o">=</span> <span class="n">TypeDef</span><span class="p">(</span><span class="n">TypeCode</span><span class="o">::</span><span class="n">Struct</span><span class="p">,</span> <span class="p">{</span>
+    <span class="n">M</span><span class="o">::</span><span class="n">Int32</span><span class="p">(</span><span class="s">&quot;ifield&quot;</span><span class="p">),</span>
+    <span class="n">M</span><span class="o">::</span><span class="n">Float64</span><span class="p">(</span><span class="s">&quot;fval&quot;</span><span class="p">),</span>
+    <span class="n">M</span><span class="o">::</span><span class="n">Struct</span><span class="p">(</span><span class="s">&quot;substruct&quot;</span><span class="p">,</span> <span class="p">{</span>
+        <span class="n">M</span><span class="o">::</span><span class="n">String</span><span class="p">(</span><span class="s">&quot;desc&quot;</span><span class="p">),</span>
+    <span class="p">}),</span>
+<span class="p">}).</span><span class="n">create</span><span class="p">();</span>
+</pre></div>
+</div>
+<p>It is also possible to extend definitions.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">namespace</span> <span class="n">M</span> <span class="o">=</span> <span class="n">pvxs</span><span class="o">::</span><span class="n">members</span><span class="p">;</span>
+
+<span class="n">TypeDef</span> <span class="nf">def</span><span class="p">(</span><span class="n">TypeCode</span><span class="o">::</span><span class="n">Struct</span><span class="p">,</span> <span class="p">{</span>
+    <span class="n">M</span><span class="o">::</span><span class="n">Int32</span><span class="p">(</span><span class="s">&quot;ifield&quot;</span><span class="p">),</span>
+    <span class="n">M</span><span class="o">::</span><span class="n">Struct</span><span class="p">(</span><span class="s">&quot;substruct&quot;</span><span class="p">,</span> <span class="p">{</span>
+        <span class="n">M</span><span class="o">::</span><span class="n">String</span><span class="p">(</span><span class="s">&quot;desc&quot;</span><span class="p">),</span>
+    <span class="p">}),</span>
+<span class="p">});</span>
+
+<span class="n">def</span> <span class="o">+=</span> <span class="p">{</span><span class="n">M</span><span class="o">::</span><span class="n">Float64</span><span class="p">(</span><span class="s">&quot;fval&quot;</span><span class="p">)};</span>
+<span class="n">Value</span> <span class="nf">v</span><span class="p">(</span><span class="n">def</span><span class="p">.</span><span class="n">create</span><span class="p">());</span>
+</pre></div>
+</div>
+<p>This also applies to the <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">ntapi</span></code> allowing fields to be added.
+eg. adding a string field “display.notes”.</p>
+<div class="highlight-c++ notranslate"><div class="highlight"><pre><span></span><span class="k">namespace</span> <span class="n">M</span> <span class="o">=</span> <span class="n">pvxs</span><span class="o">::</span><span class="n">members</span><span class="p">;</span>
+
+<span class="n">TypeDef</span> <span class="n">def</span> <span class="o">=</span> <span class="n">nt</span><span class="o">::</span><span class="n">NTScalar</span><span class="p">{</span><span class="n">TypeCode</span><span class="o">::</span><span class="n">UInt32</span><span class="p">,</span> <span class="nb">true</span><span class="p">}.</span><span class="n">build</span><span class="p">();</span>
+
+<span class="n">def</span> <span class="o">+=</span> <span class="p">{</span><span class="n">M</span><span class="o">::</span><span class="n">Struct</span><span class="p">(</span><span class="s">&quot;display&quot;</span><span class="p">,</span> <span class="p">{</span><span class="n">M</span><span class="o">::</span><span class="n">String</span><span class="p">(</span><span class="s">&quot;notes&quot;</span><span class="p">)})};</span>
+<span class="n">Value</span> <span class="nf">v</span><span class="p">(</span><span class="n">def</span><span class="p">.</span><span class="n">create</span><span class="p">());</span>
+</pre></div>
+</div>
+<dl class="class">
+<dt id="_CPPv4N4pvxs8TypeCodeE">
+<span id="_CPPv3N4pvxs8TypeCodeE"></span><span id="_CPPv2N4pvxs8TypeCodeE"></span><span id="pvxs::TypeCode"></span><span class="target" id="structpvxs_1_1TypeCode"></span><em class="property">struct </em><code class="descname">TypeCode</code><a class="headerlink" href="#_CPPv4N4pvxs8TypeCodeE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Possible Field types.</p>
+<p>eg. String is scalar string, StringA is array of strings. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Public Types</p>
+<dl class="type">
+<dt id="_CPPv4N4pvxs8TypeCode6code_tE">
+<span id="_CPPv3N4pvxs8TypeCode6code_tE"></span><span id="_CPPv2N4pvxs8TypeCode6code_tE"></span><span id="pvxs::TypeCode::code_t"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0"></span><em class="property">enum </em><code class="descname">code_t</code><a class="headerlink" href="#_CPPv4N4pvxs8TypeCode6code_tE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>actual complete (scalar) type code. </p>
+<p><em>Values:</em></p>
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode4BoolE">
+<span id="_CPPv3N4pvxs8TypeCode4BoolE"></span><span id="_CPPv2N4pvxs8TypeCode4BoolE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0a3947a3cde661c1133de5bec63e65ec51"></span><code class="descname">Bool</code> = 0x00<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode4BoolE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode5BoolAE">
+<span id="_CPPv3N4pvxs8TypeCode5BoolAE"></span><span id="_CPPv2N4pvxs8TypeCode5BoolAE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0a520432357ceced8d3585511f8bdb4975"></span><code class="descname">BoolA</code> = 0x08<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode5BoolAE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode4Int8E">
+<span id="_CPPv3N4pvxs8TypeCode4Int8E"></span><span id="_CPPv2N4pvxs8TypeCode4Int8E"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0a1abe88dc1ea58324637a24e83e805f4f"></span><code class="descname">Int8</code> = 0x20<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode4Int8E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode5Int16E">
+<span id="_CPPv3N4pvxs8TypeCode5Int16E"></span><span id="_CPPv2N4pvxs8TypeCode5Int16E"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0a7dd0a94897cf3bf5f277ac0d699d1bc1"></span><code class="descname">Int16</code> = 0x21<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode5Int16E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode5Int32E">
+<span id="_CPPv3N4pvxs8TypeCode5Int32E"></span><span id="_CPPv2N4pvxs8TypeCode5Int32E"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0a80b60affe19d3c1677abedcb615f7ad5"></span><code class="descname">Int32</code> = 0x22<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode5Int32E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode5Int64E">
+<span id="_CPPv3N4pvxs8TypeCode5Int64E"></span><span id="_CPPv2N4pvxs8TypeCode5Int64E"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0ad17f19724b3d7e30fa6b17cf377328d4"></span><code class="descname">Int64</code> = 0x23<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode5Int64E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode5UInt8E">
+<span id="_CPPv3N4pvxs8TypeCode5UInt8E"></span><span id="_CPPv2N4pvxs8TypeCode5UInt8E"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0a04c75f9714e36600dd9d38edc83d3387"></span><code class="descname">UInt8</code> = 0x24<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode5UInt8E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode6UInt16E">
+<span id="_CPPv3N4pvxs8TypeCode6UInt16E"></span><span id="_CPPv2N4pvxs8TypeCode6UInt16E"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0af43a931e4d231201ed7df59bce717b97"></span><code class="descname">UInt16</code> = 0x25<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode6UInt16E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode6UInt32E">
+<span id="_CPPv3N4pvxs8TypeCode6UInt32E"></span><span id="_CPPv2N4pvxs8TypeCode6UInt32E"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0af27eefff243b7cd73bd59e27e0cd999a"></span><code class="descname">UInt32</code> = 0x26<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode6UInt32E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode6UInt64E">
+<span id="_CPPv3N4pvxs8TypeCode6UInt64E"></span><span id="_CPPv2N4pvxs8TypeCode6UInt64E"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0a63b2bc697e9c3ffd489edf7946f23918"></span><code class="descname">UInt64</code> = 0x27<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode6UInt64E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode5Int8AE">
+<span id="_CPPv3N4pvxs8TypeCode5Int8AE"></span><span id="_CPPv2N4pvxs8TypeCode5Int8AE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0ad6dc86c217143c2bbad47f1e4e4db6b3"></span><code class="descname">Int8A</code> = 0x28<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode5Int8AE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode6Int16AE">
+<span id="_CPPv3N4pvxs8TypeCode6Int16AE"></span><span id="_CPPv2N4pvxs8TypeCode6Int16AE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0a655772575b184f2fba7851945565cf3e"></span><code class="descname">Int16A</code> = 0x29<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode6Int16AE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode6Int32AE">
+<span id="_CPPv3N4pvxs8TypeCode6Int32AE"></span><span id="_CPPv2N4pvxs8TypeCode6Int32AE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0a3c44526b52640580a404a2b13f823041"></span><code class="descname">Int32A</code> = 0x2a<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode6Int32AE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode6Int64AE">
+<span id="_CPPv3N4pvxs8TypeCode6Int64AE"></span><span id="_CPPv2N4pvxs8TypeCode6Int64AE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0a751a53a3148014be05f244fa2870b2d3"></span><code class="descname">Int64A</code> = 0x2b<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode6Int64AE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode6UInt8AE">
+<span id="_CPPv3N4pvxs8TypeCode6UInt8AE"></span><span id="_CPPv2N4pvxs8TypeCode6UInt8AE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0a002f9f34457315a9a1ab5a371eb42afc"></span><code class="descname">UInt8A</code> = 0x2c<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode6UInt8AE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode7UInt16AE">
+<span id="_CPPv3N4pvxs8TypeCode7UInt16AE"></span><span id="_CPPv2N4pvxs8TypeCode7UInt16AE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0ac732e41f58e93eb3bafcbeb13883adb8"></span><code class="descname">UInt16A</code> = 0x2d<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode7UInt16AE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode7UInt32AE">
+<span id="_CPPv3N4pvxs8TypeCode7UInt32AE"></span><span id="_CPPv2N4pvxs8TypeCode7UInt32AE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0a562ed5fe97b7da74d33c64718b9bb52f"></span><code class="descname">UInt32A</code> = 0x2e<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode7UInt32AE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode7UInt64AE">
+<span id="_CPPv3N4pvxs8TypeCode7UInt64AE"></span><span id="_CPPv2N4pvxs8TypeCode7UInt64AE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0abcd58873c2a3fdb42b55b598043fc598"></span><code class="descname">UInt64A</code> = 0x2f<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode7UInt64AE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode7Float32E">
+<span id="_CPPv3N4pvxs8TypeCode7Float32E"></span><span id="_CPPv2N4pvxs8TypeCode7Float32E"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0a20eddce267efc199badb2079247df341"></span><code class="descname">Float32</code> = 0x42<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode7Float32E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode7Float64E">
+<span id="_CPPv3N4pvxs8TypeCode7Float64E"></span><span id="_CPPv2N4pvxs8TypeCode7Float64E"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0a8b5231b1b757178182c1802d1c4c8a13"></span><code class="descname">Float64</code> = 0x43<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode7Float64E" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode8Float32AE">
+<span id="_CPPv3N4pvxs8TypeCode8Float32AE"></span><span id="_CPPv2N4pvxs8TypeCode8Float32AE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0ad07720464dbee5054bf231838b15db58"></span><code class="descname">Float32A</code> = 0x4a<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode8Float32AE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode8Float64AE">
+<span id="_CPPv3N4pvxs8TypeCode8Float64AE"></span><span id="_CPPv2N4pvxs8TypeCode8Float64AE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0a1ffbb11f038b8806b5e8d93b518dd6e9"></span><code class="descname">Float64A</code> = 0x4b<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode8Float64AE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode6StringE">
+<span id="_CPPv3N4pvxs8TypeCode6StringE"></span><span id="_CPPv2N4pvxs8TypeCode6StringE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0a7b3e763a0f23ed7b68bc040e4a084736"></span><code class="descname">String</code> = 0x60<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode6StringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode7StringAE">
+<span id="_CPPv3N4pvxs8TypeCode7StringAE"></span><span id="_CPPv2N4pvxs8TypeCode7StringAE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0aaf6b6495b98b886873d30a8578f55b9e"></span><code class="descname">StringA</code> = 0x68<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode7StringAE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode6StructE">
+<span id="_CPPv3N4pvxs8TypeCode6StructE"></span><span id="_CPPv2N4pvxs8TypeCode6StructE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0ab14f768e51582a0f3ad44d517595cfcb"></span><code class="descname">Struct</code> = 0x80<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode6StructE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode5UnionE">
+<span id="_CPPv3N4pvxs8TypeCode5UnionE"></span><span id="_CPPv2N4pvxs8TypeCode5UnionE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0a3cdfa10cb4c52c29f38864a9af97b345"></span><code class="descname">Union</code> = 0x81<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode5UnionE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode3AnyE">
+<span id="_CPPv3N4pvxs8TypeCode3AnyE"></span><span id="_CPPv2N4pvxs8TypeCode3AnyE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0a2f1ffcf8922beb0f73df23ee5893f942"></span><code class="descname">Any</code> = 0x82<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode3AnyE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode7StructAE">
+<span id="_CPPv3N4pvxs8TypeCode7StructAE"></span><span id="_CPPv2N4pvxs8TypeCode7StructAE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0a7eee6680ac25eabc0e08255e467bef8c"></span><code class="descname">StructA</code> = 0x88<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode7StructAE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode6UnionAE">
+<span id="_CPPv3N4pvxs8TypeCode6UnionAE"></span><span id="_CPPv2N4pvxs8TypeCode6UnionAE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0ad97f3a59d05113cbeb2093ecacc83c07"></span><code class="descname">UnionA</code> = 0x89<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode6UnionAE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode4AnyAE">
+<span id="_CPPv3N4pvxs8TypeCode4AnyAE"></span><span id="_CPPv2N4pvxs8TypeCode4AnyAE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0af3b238b0718e142ba64d4eaf054ae61b"></span><code class="descname">AnyA</code> = 0x8a<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode4AnyAE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8TypeCode4NullE">
+<span id="_CPPv3N4pvxs8TypeCode4NullE"></span><span id="_CPPv2N4pvxs8TypeCode4NullE"></span><span class="target" id="structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0ab835353c3bc8034ea8810950473ac653"></span><code class="descname">Null</code> = 0xff<a class="headerlink" href="#_CPPv4N4pvxs8TypeCode4NullE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Public Functions</p>
+<dl class="function">
+<dt id="_CPPv4NK4pvxs8TypeCode5orderEv">
+<span id="_CPPv3NK4pvxs8TypeCode5orderEv"></span><span id="_CPPv2NK4pvxs8TypeCode5orderEv"></span><span id="pvxs::TypeCode::orderC"></span><span class="target" id="structpvxs_1_1TypeCode_1a74ada713b51cb4b6a7f51ec58bfcf8a6"></span>uint8_t <code class="descname">order</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs8TypeCode5orderEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p><a class="reference internal" href="#structpvxs_1_1TypeCode_1a8509d0e546b8b262351d739eb73723f8"><span class="std std-ref">size()</span></a>==1&lt;&lt;<a class="reference internal" href="#structpvxs_1_1TypeCode_1a74ada713b51cb4b6a7f51ec58bfcf8a6"><span class="std std-ref">order()</span></a> </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs8TypeCode4sizeEv">
+<span id="_CPPv3NK4pvxs8TypeCode4sizeEv"></span><span id="_CPPv2NK4pvxs8TypeCode4sizeEv"></span><span id="pvxs::TypeCode::sizeC"></span><span class="target" id="structpvxs_1_1TypeCode_1a8509d0e546b8b262351d739eb73723f8"></span>uint8_t <code class="descname">size</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs8TypeCode4sizeEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Size in bytes for simple kinds (Bool, Integer, Real) </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs8TypeCode10isunsignedEv">
+<span id="_CPPv3NK4pvxs8TypeCode10isunsignedEv"></span><span id="_CPPv2NK4pvxs8TypeCode10isunsignedEv"></span><span id="pvxs::TypeCode::isunsignedC"></span><span class="target" id="structpvxs_1_1TypeCode_1a0fe3345154058d1a19145c83586b3295"></span>bool <code class="descname">isunsigned</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs8TypeCode10isunsignedEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>For Integer kind. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs8TypeCode7isarrayEv">
+<span id="_CPPv3NK4pvxs8TypeCode7isarrayEv"></span><span id="_CPPv2NK4pvxs8TypeCode7isarrayEv"></span><span id="pvxs::TypeCode::isarrayC"></span><span class="target" id="structpvxs_1_1TypeCode_1a5d38858acdfae652d6441aa45053d344"></span>bool <code class="descname">isarray</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs8TypeCode7isarrayEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>For all. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs8TypeCode7arrayOfEv">
+<span id="_CPPv3NK4pvxs8TypeCode7arrayOfEv"></span><span id="_CPPv2NK4pvxs8TypeCode7arrayOfEv"></span><span id="pvxs::TypeCode::arrayOfCCE"></span><span class="target" id="structpvxs_1_1TypeCode_1ad29b34f134c6431de8eee96df8991a1b"></span><em class="property">constexpr</em> <a class="reference internal" href="#_CPPv4N4pvxs8TypeCodeE" title="pvxs::TypeCode">TypeCode</a> <code class="descname">arrayOf</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs8TypeCode7arrayOfEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>associated array of type </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs8TypeCode8scalarOfEv">
+<span id="_CPPv3NK4pvxs8TypeCode8scalarOfEv"></span><span id="_CPPv2NK4pvxs8TypeCode8scalarOfEv"></span><span id="pvxs::TypeCode::scalarOfCCE"></span><span class="target" id="structpvxs_1_1TypeCode_1aa04e41db950e0c7abb9ed6149c2cfff1"></span><em class="property">constexpr</em> <a class="reference internal" href="#_CPPv4N4pvxs8TypeCodeE" title="pvxs::TypeCode">TypeCode</a> <code class="descname">scalarOf</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs8TypeCode8scalarOfEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>associated not array of type </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs8TypeCode4nameEv">
+<span id="_CPPv3NK4pvxs8TypeCode4nameEv"></span><span id="_CPPv2NK4pvxs8TypeCode4nameEv"></span><span id="pvxs::TypeCode::nameC"></span><span class="target" id="structpvxs_1_1TypeCode_1abc487f2aeecbacde46032c8c7a9cb18b"></span><em class="property">const</em> char *<code class="descname">name</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs8TypeCode4nameEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>name string. eg. “bool” or “uint8_t” </p>
+</dd></dl>
+
+</div>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Public Members</p>
+<dl class="member">
+<dt id="_CPPv4N4pvxs8TypeCode4codeE">
+<span id="_CPPv3N4pvxs8TypeCode4codeE"></span><span id="_CPPv2N4pvxs8TypeCode4codeE"></span><span id="pvxs::TypeCode::code__code_t"></span><span class="target" id="structpvxs_1_1TypeCode_1a48c37b72591494fff07c21776269a7a5"></span><a class="reference internal" href="#_CPPv4N4pvxs8TypeCode6code_tE" title="pvxs::TypeCode::code_t">code_t</a> <code class="descname">code</code><a class="headerlink" href="#_CPPv4N4pvxs8TypeCode4codeE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>the actual type code. eg. for switch() </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv4N4pvxs7TypeDefE">
+<span id="_CPPv3N4pvxs7TypeDefE"></span><span id="_CPPv2N4pvxs7TypeDefE"></span><span id="pvxs::TypeDef"></span><span class="target" id="classpvxs_1_1TypeDef"></span><em class="property">class </em><code class="descname">TypeDef</code><a class="headerlink" href="#_CPPv4N4pvxs7TypeDefE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Define a new type, either from scratch, or based on an existing <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a></p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">namespace</span> <span class="n">M</span> <span class="o">=</span> <span class="n">pvxs</span><span class="p">::</span><span class="n">members</span><span class="p">;</span>
+<span class="n">auto</span> <span class="n">def1</span> <span class="o">=</span> <span class="n">TypeDef</span><span class="p">(</span><span class="n">TypeCode</span><span class="p">::</span><span class="n">Int32</span><span class="p">);</span> <span class="o">//</span> <span class="n">a</span> <span class="n">single</span> <span class="n">scalar</span> <span class="n">field</span>
+<span class="n">auto</span> <span class="n">def2</span> <span class="o">=</span> <span class="n">TypeDef</span><span class="p">(</span><span class="n">TypeCode</span><span class="p">::</span><span class="n">Struct</span><span class="p">,</span> <span class="p">{</span>
+    <span class="n">M</span><span class="p">::</span><span class="n">Int32</span><span class="p">(</span><span class="s2">&quot;value&quot;</span><span class="p">),</span>
+    <span class="n">M</span><span class="p">::</span><span class="n">Struct</span><span class="p">(</span><span class="s2">&quot;alarm&quot;</span><span class="p">,</span> <span class="s2">&quot;alarm_t&quot;</span><span class="p">,</span> <span class="p">{</span>
+        <span class="n">M</span><span class="p">::</span><span class="n">Int32</span><span class="p">(</span><span class="s2">&quot;severity&quot;</span><span class="p">),</span>
+    <span class="p">}),</span>
+    <span class="n">def1</span><span class="o">.</span><span class="k">as</span><span class="p">(</span><span class="s2">&quot;special&quot;</span><span class="p">),</span> <span class="o">//</span> <span class="n">compose</span> <span class="n">definitions</span>
+<span class="p">});</span>
+
+<span class="n">auto</span> <span class="n">val</span> <span class="o">=</span> <span class="n">def2</span><span class="o">.</span><span class="n">create</span><span class="p">();</span> <span class="o">//</span> <span class="n">instantiate</span> <span class="n">a</span> <span class="n">Value</span>
+<span class="p">});</span>
+</pre></div>
+</div>
+ </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Public Functions</p>
+<dl class="function">
+<dt id="_CPPv4N4pvxs7TypeDef7TypeDefEv">
+<span id="_CPPv3N4pvxs7TypeDef7TypeDefEv"></span><span id="_CPPv2N4pvxs7TypeDef7TypeDefEv"></span><span id="pvxs::TypeDef::TypeDef"></span><span class="target" id="classpvxs_1_1TypeDef_1a82345a3a838947a25f88a400b1005557"></span><code class="descname">TypeDef</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs7TypeDef7TypeDefEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>new, empty, definition </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs7TypeDef7TypeDefERK5Value">
+<span id="_CPPv3N4pvxs7TypeDef7TypeDefERK5Value"></span><span id="_CPPv2N4pvxs7TypeDef7TypeDefERK5Value"></span><span id="pvxs::TypeDef::TypeDef__ValueCR"></span><span class="target" id="classpvxs_1_1TypeDef_1ac723f38af40ab27fc6f09cf5b1c592d6"></span><code class="descname">TypeDef</code><span class="sig-paren">(</span><em class="property">const</em> <a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a>&amp;<span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs7TypeDef7TypeDefERK5Value" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>pre-populate definition based on provided <a class="reference internal" href="value.html#classpvxs_1_1Value"><span class="std std-ref">Value</span></a> </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs7TypeDef7TypeDefE8TypeCodeRKNSt6stringERK8Iterable">
+<span id="_CPPv3N4pvxs7TypeDef7TypeDefE8TypeCodeRKNSt6stringERK8Iterable"></span><span id="_CPPv2N4pvxs7TypeDef7TypeDefE8TypeCodeRKNSt6stringERK8Iterable"></span><span id="pvxs::TypeDef::TypeDef__TypeCode.ssCR.IterableCR"></span><em class="property">template </em>&lt;<em class="property">typename</em> Iterable&gt;<br /><span class="target" id="classpvxs_1_1TypeDef_1ac555010295bd7a250a92154aa1eb5d5b"></span><code class="descname">TypeDef</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4pvxs8TypeCodeE" title="pvxs::TypeCode">TypeCode</a> <em>code</em>, <em class="property">const</em> std::string &amp;<em>id</em>, <em class="property">const</em> Iterable &amp;<em>children</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs7TypeDef7TypeDefE8TypeCodeRKNSt6stringERK8Iterable" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>new definition with id and children. code must be TypeCode::Struct or TypeCode::Union </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs7TypeDef7TypeDefE8TypeCode">
+<span id="_CPPv3N4pvxs7TypeDef7TypeDefE8TypeCode"></span><span id="_CPPv2N4pvxs7TypeDef7TypeDefE8TypeCode"></span><span id="pvxs::TypeDef::TypeDef__TypeCode"></span><span class="target" id="classpvxs_1_1TypeDef_1a64629858d0986de22578ee91e1f6b207"></span><code class="descname">TypeDef</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4pvxs8TypeCodeE" title="pvxs::TypeCode">TypeCode</a> <em>code</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs7TypeDef7TypeDefE8TypeCode" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>new definition for a single scalar field. code must <strong>not</strong> be TypeCode::Struct or TypeCode::Union </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs7TypeDef7TypeDefE8TypeCodeNSt16initializer_listI6MemberEE">
+<span id="_CPPv3N4pvxs7TypeDef7TypeDefE8TypeCodeNSt16initializer_listI6MemberEE"></span><span id="_CPPv2N4pvxs7TypeDef7TypeDefE8TypeCodeNSt16initializer_listI6MemberEE"></span><span id="pvxs::TypeDef::TypeDef__TypeCode.std::initializer_list:Member:"></span><span class="target" id="classpvxs_1_1TypeDef_1a69a90606b3ae09c9e5cfe3ceb01435eb"></span><code class="descname">TypeDef</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4pvxs8TypeCodeE" title="pvxs::TypeCode">TypeCode</a> <em>code</em>, std::initializer_list&lt;<a class="reference internal" href="#_CPPv4N4pvxs6MemberE" title="pvxs::Member">Member</a>&gt; <em>children</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs7TypeDef7TypeDefE8TypeCodeNSt16initializer_listI6MemberEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>new definition without id. code must be TypeCode::Struct or TypeCode::Union </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs7TypeDef2asERKNSt6stringE">
+<span id="_CPPv3NK4pvxs7TypeDef2asERKNSt6stringE"></span><span id="_CPPv2NK4pvxs7TypeDef2asERKNSt6stringE"></span><span id="pvxs::TypeDef::as__ssCRC"></span><span class="target" id="classpvxs_1_1TypeDef_1a9d5d16f7fb713ae734ef74b8ffb78874"></span><a class="reference internal" href="#_CPPv4N4pvxs6MemberE" title="pvxs::Member">Member</a> <code class="descname">as</code><span class="sig-paren">(</span><em class="property">const</em> std::string &amp;<em>name</em><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs7TypeDef2asERKNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Use this definition as a member (eg. sub-structure) in another definition. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs7TypeDefpLERK8Iterable">
+<span id="_CPPv3N4pvxs7TypeDefpLERK8Iterable"></span><span id="_CPPv2N4pvxs7TypeDefpLERK8Iterable"></span><span id="pvxs::TypeDef::add-assign-operator__IterableCR"></span><em class="property">template </em>&lt;<em class="property">typename</em> Iterable&gt;<br /><span class="target" id="classpvxs_1_1TypeDef_1a52ed0a76b693dfbf0eaae4fe3a535925"></span><a class="reference internal" href="#_CPPv4N4pvxs7TypeDefE" title="pvxs::TypeDef">TypeDef</a> &amp;<code class="descname">operator+=</code><span class="sig-paren">(</span><em class="property">const</em> Iterable &amp;<em>children</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs7TypeDefpLERK8Iterable" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>append additional children. Only for TypeCode::Struct or TypeCode::Union </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs7TypeDef6createEv">
+<span id="_CPPv3NK4pvxs7TypeDef6createEv"></span><span id="_CPPv2NK4pvxs7TypeDef6createEv"></span><span id="pvxs::TypeDef::createC"></span><span class="target" id="classpvxs_1_1TypeDef_1a1f85d3ea85fe93cbc016c3abecefb2c1"></span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a> <code class="descname">create</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs7TypeDef6createEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Instantiate this definition. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="class">
+<dt id="_CPPv4N4pvxs6MemberE">
+<span id="_CPPv3N4pvxs6MemberE"></span><span id="_CPPv2N4pvxs6MemberE"></span><span id="pvxs::Member"></span><span class="target" id="structpvxs_1_1Member"></span><em class="property">struct </em><code class="descname">Member</code><a class="headerlink" href="#_CPPv4N4pvxs6MemberE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Definition of a member of a Struct/Union for use with <a class="reference internal" href="#classpvxs_1_1TypeDef"><span class="std std-ref">TypeDef</span></a>. </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Public Functions</p>
+<dl class="function">
+<dt id="_CPPv4N4pvxs6Member6MemberEv">
+<span id="_CPPv3N4pvxs6Member6MemberEv"></span><span id="_CPPv2N4pvxs6Member6MemberEv"></span><span id="pvxs::Member::Member"></span><span class="target" id="structpvxs_1_1Member_1aad02a71fbafae67c52d7412ab10719ce"></span><code class="descname">Member</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6Member6MemberEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Empty/invalid <a class="reference internal" href="#structpvxs_1_1Member"><span class="std std-ref">Member</span></a>. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs6Member6MemberE8TypeCodeRKNSt6stringE">
+<span id="_CPPv3N4pvxs6Member6MemberE8TypeCodeRKNSt6stringE"></span><span id="_CPPv2N4pvxs6Member6MemberE8TypeCodeRKNSt6stringE"></span><span id="pvxs::Member::Member__TypeCode.ssCR"></span><span class="target" id="structpvxs_1_1Member_1ad390d79f6d6d36537dd3f786efe820f5"></span><code class="descname">Member</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4pvxs8TypeCodeE" title="pvxs::TypeCode">TypeCode</a> <em>code</em>, <em class="property">const</em> std::string &amp;<em>name</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6Member6MemberE8TypeCodeRKNSt6stringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p><a class="reference internal" href="#structpvxs_1_1Member"><span class="std std-ref">Member</span></a> for non-Compound <dl class="docutils">
+<dt><strong>Pre</strong></dt>
+<dd>code.kind()!=Kind::Compound </dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs6Member6MemberE8TypeCodeRKNSt6stringERKNSt6stringENSt16initializer_listI6MemberEE">
+<span id="_CPPv3N4pvxs6Member6MemberE8TypeCodeRKNSt6stringERKNSt6stringENSt16initializer_listI6MemberEE"></span><span id="_CPPv2N4pvxs6Member6MemberE8TypeCodeRKNSt6stringERKNSt6stringENSt16initializer_listI6MemberEE"></span><span id="pvxs::Member::Member__TypeCode.ssCR.ssCR.std::initializer_list:Member:"></span><span class="target" id="structpvxs_1_1Member_1a1e2f0e75f97630caec017fde0632dcbd"></span><code class="descname">Member</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4pvxs8TypeCodeE" title="pvxs::TypeCode">TypeCode</a> <em>code</em>, <em class="property">const</em> std::string &amp;<em>name</em>, <em class="property">const</em> std::string &amp;<em>id</em>, std::initializer_list&lt;<a class="reference internal" href="#_CPPv4N4pvxs6Member6MemberEv" title="pvxs::Member::Member">Member</a>&gt; <em>children</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6Member6MemberE8TypeCodeRKNSt6stringERKNSt6stringENSt16initializer_listI6MemberEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Compound member with type ID. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4N4pvxs6Member6MemberE8TypeCodeRKNSt6stringENSt16initializer_listI6MemberEE">
+<span id="_CPPv3N4pvxs6Member6MemberE8TypeCodeRKNSt6stringENSt16initializer_listI6MemberEE"></span><span id="_CPPv2N4pvxs6Member6MemberE8TypeCodeRKNSt6stringENSt16initializer_listI6MemberEE"></span><span id="pvxs::Member::Member__TypeCode.ssCR.std::initializer_list:Member:"></span><span class="target" id="structpvxs_1_1Member_1ab836cf52177a4e2586ba4f4ba4dbd0bd"></span><code class="descname">Member</code><span class="sig-paren">(</span><a class="reference internal" href="#_CPPv4N4pvxs8TypeCodeE" title="pvxs::TypeCode">TypeCode</a> <em>code</em>, <em class="property">const</em> std::string &amp;<em>name</em>, std::initializer_list&lt;<a class="reference internal" href="#_CPPv4N4pvxs6Member6MemberEv" title="pvxs::Member::Member">Member</a>&gt; <em>children</em><span class="sig-paren">)</span><a class="headerlink" href="#_CPPv4N4pvxs6Member6MemberE8TypeCodeRKNSt6stringENSt16initializer_listI6MemberEE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Compound member without type ID. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+<dl class="type">
+<dt id="_CPPv4N4pvxs7membersE">
+<span id="_CPPv3N4pvxs7membersE"></span><span id="_CPPv2N4pvxs7membersE"></span><span id="pvxs::members"></span><span class="target" id="namespacepvxs_1_1members"></span><em class="property">namespace </em><code class="descname">members</code><a class="headerlink" href="#_CPPv4N4pvxs7membersE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Helper functions for building <a class="reference internal" href="#classpvxs_1_1TypeDef"><span class="std std-ref">TypeDef</span></a>.</p>
+<p>Each of the <a class="reference internal" href="#structpvxs_1_1TypeCode_1a25a3857d5bd768c1e19f3dfc9dc718a0"><span class="std std-ref">TypeCode::code_t</span></a> enums has an associated helper function of the same name which is a shorthand notation for a Member().</p>
+<p>eg.<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">members</span><span class="p">::</span><span class="n">UInt32</span><span class="p">(</span><span class="s2">&quot;blah&quot;</span><span class="p">)</span> 
+</pre></div>
+</div>
+ is equivalent to<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Member</span><span class="p">(</span><span class="n">TypeCode</span><span class="p">::</span><span class="n">UInt32</span><span class="p">,</span> <span class="s2">&quot;blah&quot;</span><span class="p">)</span> 
+</pre></div>
+</div>
+ </p>
+</dd></dl>
+
+<dl class="type">
+<dt id="_CPPv4N4pvxs4KindE">
+<span id="_CPPv3N4pvxs4KindE"></span><span id="_CPPv2N4pvxs4KindE"></span><span id="pvxs::Kind"></span><span class="target" id="namespacepvxs_1ae7c58259687ea4dc2b0d9df7ec920f1a"></span><em class="property">enum </em><code class="descclassname">pvxs<code class="descclassname">::</code></code><code class="descname">Kind</code><a class="headerlink" href="#_CPPv4N4pvxs4KindE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Groups of related types. </p>
+<p><em>Values:</em></p>
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs4BoolE">
+<span id="_CPPv3N4pvxs4BoolE"></span><span id="_CPPv2N4pvxs4BoolE"></span><span class="target" id="namespacepvxs_1ae7c58259687ea4dc2b0d9df7ec920f1aac26f15e86e3de4c398a8273272aba034"></span><code class="descname">Bool</code> = 0x00<a class="headerlink" href="#_CPPv4N4pvxs4BoolE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs7IntegerE">
+<span id="_CPPv3N4pvxs7IntegerE"></span><span id="_CPPv2N4pvxs7IntegerE"></span><span class="target" id="namespacepvxs_1ae7c58259687ea4dc2b0d9df7ec920f1aaa0faef0851b4294c06f2b94bb1cb2044"></span><code class="descname">Integer</code> = 0x20<a class="headerlink" href="#_CPPv4N4pvxs7IntegerE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs4RealE">
+<span id="_CPPv3N4pvxs4RealE"></span><span id="_CPPv2N4pvxs4RealE"></span><span class="target" id="namespacepvxs_1ae7c58259687ea4dc2b0d9df7ec920f1aa7f80fcc452c2f1ed2bb51b39d0864df1"></span><code class="descname">Real</code> = 0x40<a class="headerlink" href="#_CPPv4N4pvxs4RealE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs6StringE">
+<span id="_CPPv3N4pvxs6StringE"></span><span id="_CPPv2N4pvxs6StringE"></span><span class="target" id="namespacepvxs_1ae7c58259687ea4dc2b0d9df7ec920f1aa27118326006d3829667a400ad23d5d98"></span><code class="descname">String</code> = 0x60<a class="headerlink" href="#_CPPv4N4pvxs6StringE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs8CompoundE">
+<span id="_CPPv3N4pvxs8CompoundE"></span><span id="_CPPv2N4pvxs8CompoundE"></span><span class="target" id="namespacepvxs_1ae7c58259687ea4dc2b0d9df7ec920f1aa26154ea007c65f860de5333a555a56cf"></span><code class="descname">Compound</code> = 0x80<a class="headerlink" href="#_CPPv4N4pvxs8CompoundE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="enumerator">
+<dt id="_CPPv4N4pvxs4NullE">
+<span id="_CPPv3N4pvxs4NullE"></span><span id="_CPPv2N4pvxs4NullE"></span><span class="target" id="namespacepvxs_1ae7c58259687ea4dc2b0d9df7ec920f1aabbb93ef26e3c101ff11cdd21cab08a94"></span><code class="descname">Null</code> = 0xe0<a class="headerlink" href="#_CPPv4N4pvxs4NullE" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PVXS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building from Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html#including-pvxs-in-your-application">Including PVXS in your application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Tools</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="value.html">Value Container</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="nt.html">Common Type Definitions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Defining Custom Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="value.html#value">Value</a></li>
+<li class="toctree-l2"><a class="reference internal" href="value.html#array-fields">Array fields</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="server.html">Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">Misc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="details.html">Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasenotes.html">Release Notes</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="value.html">Value Container</a><ul>
+      <li>Previous: <a href="ntscalar.html" title="previous chapter">NTScalar and NTScalarArray</a></li>
+      <li>Next: <a href="client.html" title="next chapter">Client</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021 Osprey DCS LLC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="_sources/typedef.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

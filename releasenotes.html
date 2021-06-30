@@ -1,0 +1,265 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Release Notes &#8212; PVXS 0.2.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Details" href="details.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="release-notes">
+<span id="releasenotes"></span><h1>Release Notes<a class="headerlink" href="#release-notes" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="unreleased">
+<h2>0.2.0 (UNRELEASED)<a class="headerlink" href="#unreleased" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Changes</li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li>To simplify usage in situations with complex threading, many client methods avoid unnecessary
+synchronization with the client worker thread.
+Cancellation still synchronizes by default, but this may now be controlled with
+the new syncCancel() Builder methods.  cf. <a class="reference internal" href="client.html#_CPPv4N4pvxs6client6detail13CommonBuilder10syncCancelEb" title="pvxs::client::detail::CommonBuilder::syncCancel"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::detail::CommonBuilder::syncCancel()</span></code></a>.</li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li>Additions</li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li>Add server ignore address list.  cf. <a class="reference internal" href="server.html#_CPPv4N4pvxs6server6Config11ignoreAddrsE" title="pvxs::server::Config::ignoreAddrs"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::server::Config::ignoreAddrs</span></code></a>.  Configured from $EPICS_PVAS_IGNORE_ADDR_LIST.</li>
+<li>Allow TCP timeout to be configured.</li>
+<li>Add <a class="reference internal" href="client.html#_CPPv4N4pvxs6client7Context7connectERKNSt6stringE" title="pvxs::client::Context::connect"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Context::connect()</span></code></a> to force Channel creation and retention.</li>
+<li>Add <a class="reference internal" href="client.html#_CPPv4NK4pvxs6client12Subscription16shared_from_thisEv" title="pvxs::client::Subscription::shared_from_this"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::client::Subscription::shared_from_this()</span></code></a> which can be used with eg. the new <a class="reference internal" href="util.html#_CPPv4N4pvxs8MPMCFIFOE" title="pvxs::MPMCFIFO"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::MPMCFIFO</span></code></a> to create a work queue.</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="may-2021">
+<h2>0.1.5 (May 2021)<a class="headerlink" href="#may-2021" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Bug Fixes</li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li>Fix several previously unusable template methods of <a class="reference internal" href="value.html#_CPPv4N4pvxs12shared_arrayE" title="pvxs::shared_array"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::shared_array</span></code></a></li>
+<li>Fix <a class="reference internal" href="util.html#_CPPv4N4pvxs16logger_level_setEPKci" title="pvxs::logger_level_set"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::logger_level_set()</span></code></a></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li>Changes</li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li>Default logger level changed from Err to Warn.</li>
+<li>Server warns when falling back from requested TCP port.</li>
+<li>Public headers include &lt;iosfwd&gt; instead of &lt;ostream&gt;.</li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li>Additions</li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li>Add <a class="reference internal" href="nt.html#_CPPv4N4pvxs2nt6NTEnumE" title="pvxs::nt::NTEnum"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::nt::NTEnum</span></code></a></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="apr-2021">
+<h2>0.1.4 (APR 2021)<a class="headerlink" href="#apr-2021" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Bug Fixes</li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li>Fix potential locking issue monitor queue</li>
+<li>Fix potential locking issue in Shared PV with concurrent open()/close() vs. post()</li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li>Additions</li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li>Add <a class="reference internal" href="nt.html#_CPPv4N4pvxs2nt9TimeStampE" title="pvxs::nt::TimeStamp"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::nt::TimeStamp</span></code></a> and <a class="reference internal" href="nt.html#_CPPv4N4pvxs2nt5AlarmE" title="pvxs::nt::Alarm"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::nt::Alarm</span></code></a>.</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="feb-2021">
+<h2>0.1.3 (FEB 2021)<a class="headerlink" href="#feb-2021" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Bug Fixes</li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li>Fix regression from 0.1.2 causing possible crash on targets defining SO_RXQ_OVFL (eg. Linux).</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="id1">
+<h2>0.1.2 (FEB 2021)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Bug Fixes</li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li>Fix TCP connection “stall” (incorrect deferred read).</li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li>Changes</li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li>Raise UDP search reply processing limit.</li>
+<li>Try not to fragment UDP search packets.</li>
+<li>mailbox example can serve more than one PV.</li>
+<li>Indent printed field=value in delta output mode.</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="jan-2021">
+<h2>0.1.1 (Jan 2021)<a class="headerlink" href="#jan-2021" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Bug Fixes</li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li>Fix decoding of “null” string.  Addresses interoperability with pvAccessJava.</li>
+<li>Increase inactivity timeout for TCP connections from 30 to 40 seconds.  Also for interoperability with pvAccessJava.</li>
+<li>Client search requests incorrectly set Server direction bit.  (existing servers don’t enforce this)</li>
+<li>Improved handling of errors resulting from pvRequest processing.  eg. field selection which doesn’t select any fields.</li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li>Added Features</li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li>Added <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">PVXS_ABI_VERSION</span></code> et al. to <em>pvxs/version.h</em></li>
+<li>Add <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">testThrowsMatch</span></code> and <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">testStrMatch</span></code> to <em>pvxs/unitttest.h</em></li>
+</ul>
+</div></blockquote>
+<ul class="simple">
+<li>Changes</li>
+</ul>
+<blockquote>
+<div><ul class="simple">
+<li>Changed name of automatic Sources <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">builtin</span></code> and <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">server</span></code> to <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">__builtin</span></code> and <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">__server</span></code>.
+Document that Source names beginning with <code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">__</span></code> are reserved.</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="dec-2020">
+<h2>0.1.0 (Dec 2020)<a class="headerlink" href="#dec-2020" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ul class="simple">
+<li>Initial Release</li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PVXS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building from Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html#including-pvxs-in-your-application">Including PVXS in your application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="value.html">Value Container</a></li>
+<li class="toctree-l1"><a class="reference internal" href="client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="server.html">Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">Misc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="details.html">Details</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Release Notes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#unreleased">0.2.0 (UNRELEASED)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#may-2021">0.1.5 (May 2021)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#apr-2021">0.1.4 (APR 2021)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#feb-2021">0.1.3 (FEB 2021)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">0.1.2 (FEB 2021)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#jan-2021">0.1.1 (Jan 2021)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#dec-2020">0.1.0 (Dec 2020)</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="details.html" title="previous chapter">Details</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021 Osprey DCS LLC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="_sources/releasenotes.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

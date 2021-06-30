@@ -1,0 +1,293 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Common Type Definitions &#8212; PVXS 0.2.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="NTScalar and NTScalarArray" href="ntscalar.html" />
+    <link rel="prev" title="Value Container" href="value.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="common-type-definitions">
+<span id="ntapi"></span><h1>Common Type Definitions<a class="headerlink" href="#common-type-definitions" title="Permalink to this headline">¶</a></h1>
+<p>Library of common type definitions.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#include &lt;pvxs/nt.h&gt;</span>
+<span class="n">namespace</span> <span class="n">pvxs</span> <span class="p">{</span> <span class="n">namespace</span> <span class="n">nt</span> <span class="p">{</span> <span class="o">...</span> <span class="p">}</span> <span class="p">}</span>
+</pre></div>
+</div>
+<div class="toctree-wrapper compound">
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ntscalar.html">NTScalar and NTScalarArray</a></li>
+</ul>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The nt::* factories are expensive.  Avoid repeated use with <a class="reference internal" href="value.html#_CPPv4NK4pvxs5Value10cloneEmptyEv" title="pvxs::Value::cloneEmpty"><code class="xref cpp cpp-any docutils literal notranslate"><span class="pre">pvxs::Value::cloneEmpty()</span></code></a>.</p>
+</div>
+<div class="section" id="time-t">
+<span id="id1"></span><h2>time_t<a class="headerlink" href="#time-t" title="Permalink to this headline">¶</a></h2>
+<p>Commonly used sub-structure to represent a time</p>
+<dl class="class">
+<dt id="_CPPv4N4pvxs2nt9TimeStampE">
+<span id="_CPPv3N4pvxs2nt9TimeStampE"></span><span id="_CPPv2N4pvxs2nt9TimeStampE"></span><span id="pvxs::nt::TimeStamp"></span><span class="target" id="structpvxs_1_1nt_1_1TimeStamp"></span><em class="property">struct </em><code class="descname">TimeStamp</code><a class="headerlink" href="#_CPPv4N4pvxs2nt9TimeStampE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The time_t struct</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">equivalent</span>
+<span class="n">struct</span> <span class="n">time_t</span> <span class="p">{</span>
+    <span class="n">int64_t</span> <span class="n">secondsPastEpoch</span><span class="p">;</span>
+    <span class="n">int32_t</span> <span class="n">nanoseconds</span><span class="p">;</span>
+    <span class="n">int32_t</span> <span class="n">userTag</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+ <dl class="docutils">
+<dt><strong>Since</strong></dt>
+<dd>0.1.4 </dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="docutils">
+<dt><strong>“secondsPastEpoch”</strong></dt>
+<dd>Seconds since POSIX epoch of 1 Jan 1970 UTC.
+Note that the EPICS epoch is 631152000 seconds after the POSIX epoch.
+(cf. POSIX_TIME_AT_EPICS_EPOCH in epicsTime.h from EPICS Base)</dd>
+<dt><strong>“nanoseconds”</strong></dt>
+<dd>Number of nanoseconds since the start of the second.</dd>
+</dl>
+</div>
+<div class="section" id="alarm-t">
+<span id="id2"></span><h2>alarm_t<a class="headerlink" href="#alarm-t" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="_CPPv4N4pvxs2nt5AlarmE">
+<span id="_CPPv3N4pvxs2nt5AlarmE"></span><span id="_CPPv2N4pvxs2nt5AlarmE"></span><span id="pvxs::nt::Alarm"></span><span class="target" id="structpvxs_1_1nt_1_1Alarm"></span><em class="property">struct </em><code class="descname">Alarm</code><a class="headerlink" href="#_CPPv4N4pvxs2nt5AlarmE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The alarm_t struct</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">equivalent</span>
+<span class="n">struct</span> <span class="n">alarm_t</span> <span class="p">{</span>
+    <span class="n">int32_t</span> <span class="n">severity</span><span class="p">;</span>
+    <span class="n">int32_t</span> <span class="n">status</span><span class="p">;</span>
+    <span class="n">string</span> <span class="n">message</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+ <dl class="docutils">
+<dt><strong>Since</strong></dt>
+<dd>0.1.4 </dd>
+</dl>
+</p>
+</dd></dl>
+
+<dl class="docutils">
+<dt><strong>“severity”</strong></dt>
+<dd><p class="first">Enumeration of 0 - No Alarm, 1 - Minor, 2 - Major, 3 - Invalid.</p>
+<p>The meaning of Minor and Major are contextual and may be different for each PV.
+An Invalid alarm severity means that the value field should not be taken as
+a meaningful represention of eg. the quantity being measured.  Typically,
+it reflects the most recent valid value.</p>
+<p class="last">A UI client may change the state of a widget displaying a value which is alarming
+by eg. changing border color.</p>
+</dd>
+<dt><strong>“status”</strong></dt>
+<dd>Enumeration providing context to <strong>“severity”</strong> 0 - No Alarm, 1 - Device, 2 - Driver,
+3 - Record, 4 - Database, 5 - Configuration, 6 - Undefined, 7 - Client</dd>
+<dt><strong>“message”</strong></dt>
+<dd>Arbitrary string describing the condition being alarmed.</dd>
+</dl>
+</div>
+<div class="section" id="ntenum">
+<h2>NTEnum<a class="headerlink" href="#ntenum" title="Permalink to this headline">¶</a></h2>
+<p>Container for a scalar value selection from a list of strings.</p>
+<dl class="class">
+<dt id="_CPPv4N4pvxs2nt6NTEnumE">
+<span id="_CPPv3N4pvxs2nt6NTEnumE"></span><span id="_CPPv2N4pvxs2nt6NTEnumE"></span><span id="pvxs::nt::NTEnum"></span><span class="target" id="structpvxs_1_1nt_1_1NTEnum"></span><em class="property">struct </em><code class="descname">NTEnum</code><a class="headerlink" href="#_CPPv4N4pvxs2nt6NTEnumE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>An enumerated value (choice from a list of strings)</p>
+<p><dl class="docutils">
+<dt><strong>Since</strong></dt>
+<dd>0.1.5 </dd>
+</dl>
+</p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Public Functions</p>
+<dl class="function">
+<dt id="_CPPv4NK4pvxs2nt6NTEnum5buildEv">
+<span id="_CPPv3NK4pvxs2nt6NTEnum5buildEv"></span><span id="_CPPv2NK4pvxs2nt6NTEnum5buildEv"></span><span id="pvxs::nt::NTEnum::buildC"></span><span class="target" id="structpvxs_1_1nt_1_1NTEnum_1a1e825057449eab9700453b64ead28206"></span><a class="reference internal" href="typedef.html#_CPPv4N4pvxs7TypeDefE" title="pvxs::TypeDef">TypeDef</a> <code class="descname">build</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs2nt6NTEnum5buildEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>A <a class="reference internal" href="typedef.html#classpvxs_1_1TypeDef"><span class="std std-ref">TypeDef</span></a> which can be appended. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs2nt6NTEnum6createEv">
+<span id="_CPPv3NK4pvxs2nt6NTEnum6createEv"></span><span id="_CPPv2NK4pvxs2nt6NTEnum6createEv"></span><span id="pvxs::nt::NTEnum::createC"></span><span class="target" id="structpvxs_1_1nt_1_1NTEnum_1a6ea366dd0d4201e85255b347cd75dc1a"></span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a> <code class="descname">create</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs2nt6NTEnum6createEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Instantiate. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="ntndarray">
+<h2>NTNDArray<a class="headerlink" href="#ntndarray" title="Permalink to this headline">¶</a></h2>
+<p>Container for image data used by areaDetector.</p>
+<dl class="class">
+<dt id="_CPPv4N4pvxs2nt9NTNDArrayE">
+<span id="_CPPv3N4pvxs2nt9NTNDArrayE"></span><span id="_CPPv2N4pvxs2nt9NTNDArrayE"></span><span id="pvxs::nt::NTNDArray"></span><span class="target" id="structpvxs_1_1nt_1_1NTNDArray"></span><em class="property">struct </em><code class="descname">NTNDArray</code><a class="headerlink" href="#_CPPv4N4pvxs2nt9NTNDArrayE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>The areaDetector inspired N-dimension array/image container.</p>
+<p><div class="highlight-default notranslate"><div class="highlight"><pre><span></span>auto def = pvxs::nt::NTNDArray{}.build();
+auto value = def.create(); // instantiate a Value
+</pre></div>
+</div>
+ </p>
+<div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Public Functions</p>
+<dl class="function">
+<dt id="_CPPv4NK4pvxs2nt9NTNDArray5buildEv">
+<span id="_CPPv3NK4pvxs2nt9NTNDArray5buildEv"></span><span id="_CPPv2NK4pvxs2nt9NTNDArray5buildEv"></span><span id="pvxs::nt::NTNDArray::buildC"></span><span class="target" id="structpvxs_1_1nt_1_1NTNDArray_1ad03402506bc591621b468199f6ed8e7f"></span><a class="reference internal" href="typedef.html#_CPPv4N4pvxs7TypeDefE" title="pvxs::TypeDef">TypeDef</a> <code class="descname">build</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs2nt9NTNDArray5buildEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>A <a class="reference internal" href="typedef.html#classpvxs_1_1TypeDef"><span class="std std-ref">TypeDef</span></a> which can be appended. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs2nt9NTNDArray6createEv">
+<span id="_CPPv3NK4pvxs2nt9NTNDArray6createEv"></span><span id="_CPPv2NK4pvxs2nt9NTNDArray6createEv"></span><span id="pvxs::nt::NTNDArray::createC"></span><span class="target" id="structpvxs_1_1nt_1_1NTNDArray_1a3e450b20099d4cccb51ad173642b18bc"></span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a> <code class="descname">create</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs2nt9NTNDArray6createEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Instantiate. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</div>
+<div class="section" id="nturi">
+<h2>NTURI<a class="headerlink" href="#nturi" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="_CPPv4N4pvxs2nt5NTURIE">
+<span id="_CPPv3N4pvxs2nt5NTURIE"></span><span id="_CPPv2N4pvxs2nt5NTURIE"></span><span id="pvxs::nt::NTURI"></span><span class="target" id="classpvxs_1_1nt_1_1NTURI"></span><em class="property">class </em><code class="descname">NTURI</code><a class="headerlink" href="#_CPPv4N4pvxs2nt5NTURIE" title="Permalink to this definition">¶</a><br /></dt>
+<dd><div class="breathe-sectiondef docutils container">
+<p class="breathe-sectiondef-title rubric">Public Functions</p>
+<dl class="function">
+<dt id="_CPPv4NK4pvxs2nt5NTURI5buildEv">
+<span id="_CPPv3NK4pvxs2nt5NTURI5buildEv"></span><span id="_CPPv2NK4pvxs2nt5NTURI5buildEv"></span><span id="pvxs::nt::NTURI::buildC"></span><span class="target" id="classpvxs_1_1nt_1_1NTURI_1a4b7e4fdd89bf20ab0c6b405b168019dc"></span><a class="reference internal" href="typedef.html#_CPPv4N4pvxs7TypeDefE" title="pvxs::TypeDef">TypeDef</a> <code class="descname">build</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs2nt5NTURI5buildEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>A <a class="reference internal" href="typedef.html#classpvxs_1_1TypeDef"><span class="std std-ref">TypeDef</span></a> which can be appended. </p>
+</dd></dl>
+
+<dl class="function">
+<dt id="_CPPv4NK4pvxs2nt5NTURI6createEv">
+<span id="_CPPv3NK4pvxs2nt5NTURI6createEv"></span><span id="_CPPv2NK4pvxs2nt5NTURI6createEv"></span><span id="pvxs::nt::NTURI::createC"></span><span class="target" id="classpvxs_1_1nt_1_1NTURI_1a81e9b21d412c4fd316af7fd022c3caab"></span><a class="reference internal" href="value.html#_CPPv4N4pvxs5ValueE" title="pvxs::Value">Value</a> <code class="descname">create</code><span class="sig-paren">(</span><span class="sig-paren">)</span> <em class="property">const</em><a class="headerlink" href="#_CPPv4NK4pvxs2nt5NTURI6createEv" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Instantiate. </p>
+</dd></dl>
+
+</div>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">PVXS</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="example.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html">Building from Source</a></li>
+<li class="toctree-l1"><a class="reference internal" href="building.html#including-pvxs-in-your-application">Including PVXS in your application</a></li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">Command Line Tools</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="value.html">Value Container</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Common Type Definitions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ntscalar.html">NTScalar and NTScalarArray</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#time-t">time_t</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#alarm-t">alarm_t</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ntenum">NTEnum</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#ntndarray">NTNDArray</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#nturi">NTURI</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="typedef.html">Defining Custom Types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="value.html#value">Value</a></li>
+<li class="toctree-l2"><a class="reference internal" href="value.html#array-fields">Array fields</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="client.html">Client</a></li>
+<li class="toctree-l1"><a class="reference internal" href="server.html">Server</a></li>
+<li class="toctree-l1"><a class="reference internal" href="util.html">Misc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="details.html">Details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="releasenotes.html">Release Notes</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="value.html">Value Container</a><ul>
+      <li>Previous: <a href="value.html" title="previous chapter">Value Container</a></li>
+      <li>Next: <a href="ntscalar.html" title="next chapter">NTScalar and NTScalarArray</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2021 Osprey DCS LLC.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.8.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="_sources/nt.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
