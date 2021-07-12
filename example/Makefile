@@ -35,6 +35,9 @@ rpc_server_SRCS += rpc_server.cpp
 TESTPROD_HOST += rpc_client
 rpc_client_SRCS += rpc_client.cpp
 
+TESTPROD_Linux += tablerx
+tablerx_SRCS += tablerx.cpp
+
 #===========================
 
 include $(TOP)/configure/RULES
