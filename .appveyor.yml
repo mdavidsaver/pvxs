@@ -17,6 +17,9 @@ skip_commits:
     - '**/*.rst'
     - '**/*.md'
     - '.github/*'
+    - 'setup.py'
+    - 'pyproject.toml'
+    - 'python/*'
 
 #---------------------------------#
 #   build matrix configuration    #

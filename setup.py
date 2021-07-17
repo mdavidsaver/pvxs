@@ -6,6 +6,7 @@ import re
 from glob import glob
 
 from distutils import log
+from distutils.errors import CompileError
 from setuptools import Command, Distribution
 from setuptools_dso import DSO, Extension, setup, build_dso, ProbeToolchain
 from epicscorelibs.config import get_config_var
@@ -70,8 +71,22 @@ def cexpand(iname, oname, defs={}, dry_run=False):
     if dry_run:
         log.info('Would write %s', oname)
     else:
+        log.info('Write %s', oname)
+        log.info('>>>>>>>>')
+        log.info('%s', out)
+        log.info('<<<<<<<<')
         with open(oname, 'w') as F:
             F.write(out)
+
+def logexc(fn):
+    def wrapit(*args, **kws):
+        try:
+            return fn(*args, **kws)
+        except:
+            import traceback
+            traceback.print_exc()
+            raise
+    return wrapit
 
 class Expand(Command):
     user_options = [
@@ -90,13 +105,15 @@ class Expand(Command):
                                    ('build_temp', 'build_temp'),
                                   )
 
+    @logexc
     def run(self):
         log.info("In Expand")
         self.mkpath(os.path.join(self.build_temp, 'event2'))
         self.mkpath(os.path.join(self.build_lib, 'pvxslibs', 'include', 'pvxs'))
 
+        OS_CLASS = get_config_var('OS_CLASS')
 
-        DEFS = {
+        self.distribution.DEFS = DEFS = {
             # *NIX unsupported by EPICS Base
             '_ALL_SOURCE':None,
             '_TANDEM_SOURCE':None,
@@ -130,14 +147,18 @@ class Expand(Command):
         if probe.check_symbol('__GNU_LIBRARY__', headers=['features.h']):
             DEFS['_GNU_SOURCE'] = '1'
             probe.define_macros += [('_GNU_SOURCE', None)]
+        else:
+            DEFS['_GNU_SOURCE'] = None
 
         if OS_CLASS=='WIN32':
             probe.headers += ['winsock2.h', 'ws2tcpip.h']
             probe.define_macros += [('Iwinsock2.h', None), ('Iws2tcpip.h', None), ('_WIN32_WINNT', '0x0600')]
 
             if probe.check_include('afunix.h'):
-                DEFS[EVENT__HAVE_AFUNIX_H] = '1'
+                DEFS['EVENT__HAVE_AFUNIX_H'] = '1'
                 probe.headers.append('afunix.h')
+            else:
+                DEFS['EVENT__HAVE_AFUNIX_H'] = None
 
             DEFS.update({
                 'EVENT__HAVE_INET_NTOP':'0',
@@ -284,7 +305,11 @@ class Expand(Command):
 
         DEFS['EVENT__HAVE_EVENT_PORTS'] = '1' if DEFS['EVENT__HAVE_PORT_H']=='1' and DEFS['EVENT__HAVE_PORT_CREATE']=='1' else None
 
-        for kw in ['inline', 'size_t', 'ssize_t', 'socklen_t']:
+        if OS_CLASS=='WIN32':
+            # windows has select(), but support comes from win32select.c instead of the usual select.c
+            DEFS['EVENT__HAVE_SELECT'] = None
+
+        for kw in ['inline', 'size_t']:
             DEFS['EVENT__'+kw] = kw
         DEFS['EVENT__inline'] = 'inline'
         DEFS['EVENT__size_t'] = 'size_t'
@@ -325,7 +350,8 @@ class Expand(Command):
                     'pthread_t',
                     'uintptr_t',
                     'size_t',
-                    'ssize_t',
+                    #'ssize_t',
+                    #'SSIZE_T',
                     'off_t',
                     'socklen_t',
                     'pid_t',
@@ -339,8 +365,29 @@ class Expand(Command):
                     'time_t',
                     'struct linger']:
             mangled_type = type.upper().replace(' ','_').replace('*', 'P')
-            DEFS['EVENT__SIZEOF_'+mangled_type] = str(probe.sizeof(type))
-            DEFS['EVENT__HAVE_'+mangled_type] = '1'
+            try:
+                DEFS['EVENT__SIZEOF_'+mangled_type] = str(probe.sizeof(type))
+            except CompileError:
+                DEFS['EVENT__SIZEOF_'+mangled_type] = '0'
+                DEFS['EVENT__HAVE_'+mangled_type] = None
+            else:
+                DEFS['EVENT__HAVE_'+mangled_type] = '1'
+
+        try:
+            DEFS['EVENT__SIZEOF_SSIZE_T'] = str(probe.sizeof('ssize_t'))
+            DEFS['EVENT__ssize_t'] = 'ssize_t'
+        except CompileError:
+            DEFS['EVENT__SIZEOF_SSIZE_T'] = str(probe.sizeof('SSIZE_T'))
+            DEFS['EVENT__ssize_t'] = 'SSIZE_T'
+            # libevent CMakeLists.txt defaults to 'int' if neither is available, which seems wrong...
+        DEFS['EVENT__HAVE_SSIZE_T'] = '1'
+
+        if DEFS['EVENT__SIZEOF_SOCKLEN_T']!='0':
+            DEFS['EVENT__socklen_t'] = 'socklen_t'
+
+        else:
+            DEFS['EVENT__socklen_t'] = 'unsigned int'
+            DEFS['EVENT__SIZEOF_SOCKLEN_T'] = DEFS['EVENT__SIZEOF_UNSIGNED_INT']
 
         for struct, member in [('struct in6_addr', 's6_addr16'),
                                ('struct in6_addr', 's6_addr32'),
@@ -374,6 +421,7 @@ class Expand(Command):
         if self.dry_run:
             log.info('Would create pvxsVCS.h')
         else:
+            log.info('Writing pvxsVCS.h')
             with open(os.path.join(self.build_temp, 'pvxsVCS.h'), 'w') as F:
                 F.write('''
 #ifndef PVXS_VCS_VERSION
@@ -405,139 +453,185 @@ class InstallHeaders(Command):
             self.copy_file(header,
                            os.path.join(self.build_lib, 'pvxslibs', 'include', os.path.relpath(header, 'src')))
 
-OS_CLASS = get_config_var('OS_CLASS')
+
+@logexc
+def define_DSOS(self):
+    DEFS = self.distribution.DEFS
+    OS_CLASS = get_config_var('OS_CLASS')
+
+    src_core = [
+        'buffer.c',
+        'bufferevent.c',
+        'bufferevent_filter.c',
+        'bufferevent_pair.c',
+        'bufferevent_ratelim.c',
+        'bufferevent_sock.c',
+        'event.c',
+        'evmap.c',
+        'evthread.c',
+        'evutil.c',
+        'evutil_rand.c',
+        'evutil_time.c',
+        'watch.c',
+        'listener.c',
+        'log.c',
+        'signal.c',
+        'strlcpy.c',
+    ]
+
+    if DEFS['EVENT__HAVE_POLL']=='1':
+        src_core += ['poll.c']
+
+    if DEFS['EVENT__HAVE_KQUEUE']=='1':
+        src_core += ['kqueue.c']
+
+    if DEFS['EVENT__HAVE_DEVPOLL']=='1':
+        src_core += ['devpoll.c']
+
+    if DEFS['EVENT__HAVE_WEPOLL']=='1':
+        src_core += ['wepoll.c', 'epoll.c']
+    elif DEFS['EVENT__HAVE_EPOLL']=='1':
+        src_core += ['epoll.c']
+
+    if DEFS['EVENT__HAVE_EVENT_PORTS']=='1':
+        src_core += ['evport.c']
+
+    if OS_CLASS=='WIN32':
+        src_core += [
+            'buffer_iocp.c',
+            'bufferevent_async.c',
+            'event_iocp.c',
+            'win32select.c',
+            'evthread_win32.c',
+        ]
+    elif DEFS['EVENT__HAVE_SELECT']=='1':
+        src_core += ['select.c']
+
+    src_core = [os.path.join('bundle', 'libevent', src) for src in src_core]
+
+    src_pvxs = [
+        'describe.cpp',
+        'log.cpp',
+        'unittest.cpp',
+        'util.cpp',
+        'osgroups.cpp',
+        'sharedarray.cpp',
+        'bitmask.cpp',
+        'type.cpp',
+        'data.cpp',
+        'datafmt.cpp',
+        'pvrequest.cpp',
+        'dataencode.cpp',
+        'nt.cpp',
+        'evhelper.cpp',
+        'udp_collector.cpp',
+        'config.cpp',
+        'conn.cpp',
+        'server.cpp',
+        'serverconn.cpp',
+        'serverchan.cpp',
+        'serverintrospect.cpp',
+        'serverget.cpp',
+        'servermon.cpp',
+        'serversource.cpp',
+        'sharedpv.cpp',
+        'client.cpp',
+        'clientreq.cpp',
+        'clientconn.cpp',
+        'clientintrospect.cpp',
+        'clientget.cpp',
+        'clientmon.cpp',
+        'clientdiscover.cpp',
+    ]
+
+    src_pvxs = [os.path.join('src', src) for src in src_pvxs]
+
+    if OS_CLASS=='WIN32':
+        src_pvxs += ['src/os/WIN32/osdSockExt.cpp']
+    else:
+        src_pvxs += ['src/os/default/osdSockExt.cpp']
+
+    event_libs = []
+    if OS_CLASS=='WIN32':
+        event_libs = ['ws2_32','shell32','advapi32','bcrypt','iphlpapi']
+
+    probe = ProbeToolchain()
+
+    cxx11_flags = []
+    if probe.try_compile('int probefn() { auto x=1; return x; }',
+                         language='c++',
+                         extra_preargs=['-std=c++11']):
+        cxx11_flags += ['-std=c++11']
+
+    pvxs_abi = '%(PVXS_MAJOR_VERSION)s.%(PVXS_MINOR_VERSION)s'%pvxsversion
+    event_abi = '%(EVENT_VERSION_MAJOR)s.%(EVENT_VERSION_MINOR)s.%(EVENT_VERSION_PATCH)s'%eventversion
+
+    DSOS = []
+
+    dsos_pvxs = [
+        'epicscorelibs.lib.Com',
+        'pvxslibs.lib.event_core',
+    ]
+
+    if OS_CLASS!='WIN32':
+        DSOS += [DSO('pvxslibs.lib.event_pthread',
+                [os.path.join('bundle', 'libevent', 'evthread_pthread.c')],
+                define_macros = [('event_pthreads_shared_EXPORTS', None)],
+                include_dirs=[
+                    'bundle/libevent/include',
+                    'bundle/libevent/compat', # for sys/queue.h
+                    '.'
+                ],
+                soversion = event_abi,
+        )]
+        dsos_pvxs += ['pvxslibs.lib.event_pthread']
+
+    DSOS += [
+        DSO('pvxslibs.lib.event_core', src_core,
+            define_macros = [('event_core_shared_EXPORTS', None)],
+            include_dirs=[
+                'bundle/libevent/include',
+                'bundle/libevent/compat', # for sys/queue.h
+                '.'
+            ],
+            soversion = event_abi,
+            libraries = event_libs,
+        ),
+        DSO('pvxslibs.lib.pvxs', src_pvxs,
+            define_macros = [('PVXS_API_BUILDING', None), ('PVXS_ENABLE_EXPERT_API', None)] + get_config_var('CPPFLAGS'),
+            include_dirs=[
+                'bundle/libevent/include',
+                'src',
+                '.', # generated headers under build/tmp
+                'pvxslibs/include', # generated headers under build/lib
+                epicscorelibs.path.include_path
+                ],
+            extra_compile_args = cxx11_flags + get_config_var('CXXFLAGS'),
+            extra_link_args = cxx11_flags + get_config_var('LDFLAGS'),
+            soversion = pvxs_abi,
+            dsos = dsos_pvxs,
+            libraries = get_config_var('LDADD') + event_libs,
+        )
+    ]
+
+    return DSOS
 
 build_dso.sub_commands.extend([
     ('build_expand', lambda self:True),
     ('install_epics_headers', lambda self:True),
 ])
 
-src_core = [
-    'buffer.c',
-    'bufferevent.c',
-    'bufferevent_filter.c',
-    'bufferevent_pair.c',
-    'bufferevent_ratelim.c',
-    'bufferevent_sock.c',
-    'event.c',
-    'evmap.c',
-    'evthread.c',
-    'evutil.c',
-    'evutil_rand.c',
-    'evutil_time.c',
-    'watch.c',
-    'listener.c',
-    'log.c',
-    'signal.c',
-    'strlcpy.c',
-]
-
-src_core += [
-    'select.c',
-    'poll.c',
-    #'kqueue.c',
-    #'devpoll.c',
-    'epoll.c',
-    'evport.c',
-]
-
-src_core = [os.path.join('bundle', 'libevent', src) for src in src_core]
-
-src_pvxs = [
-    'describe.cpp',
-    'log.cpp',
-    'unittest.cpp',
-    'util.cpp',
-    'osgroups.cpp',
-    'sharedarray.cpp',
-    'bitmask.cpp',
-    'type.cpp',
-    'data.cpp',
-    'datafmt.cpp',
-    'pvrequest.cpp',
-    'dataencode.cpp',
-    'nt.cpp',
-    'evhelper.cpp',
-    'udp_collector.cpp',
-    'config.cpp',
-    'conn.cpp',
-    'server.cpp',
-    'serverconn.cpp',
-    'serverchan.cpp',
-    'serverintrospect.cpp',
-    'serverget.cpp',
-    'servermon.cpp',
-    'serversource.cpp',
-    'sharedpv.cpp',
-    'client.cpp',
-    'clientreq.cpp',
-    'clientconn.cpp',
-    'clientintrospect.cpp',
-    'clientget.cpp',
-    'clientmon.cpp',
-    'clientdiscover.cpp',
-]
-
-src_pvxs = [os.path.join('src', src) for src in src_pvxs]
-
-if OS_CLASS=='WIN32':
-    src_pvxs += ['src/os/WIN32/osdSockExt.cpp']
-else:
-    src_pvxs += ['src/os/default/osdSockExt.cpp']
-
-pvxs_abi = '%(PVXS_MAJOR_VERSION)s.%(PVXS_MINOR_VERSION)s'%pvxsversion
-event_abi = '%(EVENT_VERSION_MAJOR)s.%(EVENT_VERSION_MINOR)s.%(EVENT_VERSION_PATCH)s'%eventversion
-
-DSOS = []
-
-dsos_pvxs = [
-    'epicscorelibs.lib.Com',
-    'pvxslibs.lib.event_core',
-]
-
-if OS_CLASS!='WIN32':
-    DSOS += [DSO('pvxslibs.lib.event_pthread',
-            [os.path.join('bundle', 'libevent', 'evthread_pthread.c')],
-            define_macros = [('event_pthreads_shared_EXPORTS', None)],
-            include_dirs=['bundle/libevent/include', '.'],
-            soversion = event_abi,
-    )]
-    dsos_pvxs += ['pvxslibs.lib.event_pthread']
-
-DSOS += [
-    DSO('pvxslibs.lib.event_core', src_core,
-        define_macros = [('event_core_shared_EXPORTS', None)],
-        include_dirs=['bundle/libevent/include', '.'],
-        soversion = event_abi,
-    ),
-    DSO('pvxslibs.lib.pvxs', src_pvxs,
-        define_macros = [('PVXS_API_BUILDING', None), ('PVXS_ENABLE_EXPERT_API', None)] + get_config_var('CPPFLAGS'),
-        include_dirs=[
-            'bundle/libevent/include',
-            'src',
-            '.', # generated headers under build/tmp
-            'pvxslibs/include', # generated headers under build/lib
-            epicscorelibs.path.include_path
-            ],
-        extra_compile_args = get_config_var('CXXFLAGS'),
-        extra_link_args = get_config_var('LDFLAGS'),
-        soversion = pvxs_abi,
-        dsos = dsos_pvxs,
-        libraries = get_config_var('LDADD'),
-    )
-]
-
 setup(
     name='pvxslibs',
-    version="0.2.0",
+    version="0.2.0a1",
     # setup/build time dependencies listed in pyproject.toml
     # cf. PEP 518
     #setup_requires = ['setuptools_dso'],
     # also need at runtime for DSO filename lookup
-    install_requires = ['setuptools_dso>=2.1a1'],
+    install_requires = ['setuptools_dso>=2.1a3'],
     packages=['pvxslibs', 'pvxslibs.lib', 'pvxslibs.test'],
     package_dir={'': 'python'},
-    x_dsos = DSOS,
+    x_dsos = define_DSOS,
     cmdclass = {
         'build_expand': Expand,
         'install_epics_headers':InstallHeaders,

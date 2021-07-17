@@ -3,13 +3,16 @@
 
 # This is YAML - indentation levels are crucial
 
-name: PVXS
+name: PVXS EPICS
 
 # Trigger on pushes and PRs to any branch
 on:
   push:
     paths-ignore:
       - .appveyor.yml
+      - setup.py
+      - pyproject.toml
+      - python/*
   pull_request:
 
 env:
@@ -19,7 +22,7 @@ env:
   PVXS_LOG: pvxs.*=WARN
 
 jobs:
-  native-epics:
+  native:
     name: ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
     # Set environment variables from matrix parameters
@@ -143,7 +146,7 @@ jobs:
         name: tapfiles ${{ matrix.name }}
         path: '**/O.*/*.tap'
 
-  docker-epics:
+  docker:
     name: ${{ matrix.name }}
     runs-on: ubuntu-latest
     container:
@@ -228,216 +231,3 @@ jobs:
       with:
         name: tapfiles ${{ matrix.name }}
         path: '**/O.*/*.tap'
-
-  native-py:
-    name: ${{ matrix.name }}
-    runs-on: ${{ matrix.os }}
-    env:
-      PRE:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - name: linux64 test
-            os: ubuntu-latest
-            python: "3.5"
-
-          # OSX py builds
-          - name: osx 2.7 intel
-            os: macos-latest
-            python: "2.7"
-            piparch: macosx_10_9_intel
-
-          - name: osx 3.6 intel
-            os: macos-latest
-            python: "3.6"
-            piparch: macosx_10_9_intel
-
-          - name: osx 3.7 intel
-            os: macos-latest
-            python: "3.7"
-            piparch: macosx_10_9_intel
-
-          - name: osx 3.8 intel
-            os: macos-latest
-            python: "3.8"
-            piparch: macosx_10_9_intel
-
-          - name: osx 3.9 intel
-            os: macos-latest
-            python: "3.9"
-            piparch: macosx_10_9_intel
-
-          # Windows py builds
-
-          ## missing Microsoft Visual C++ 9.0
-          #- os: windows-latest
-          #  python: "2.7"
-          #  piparch: win_amd64
-
-          - name: win64 3.5
-            os: windows-latest
-            python: "3.5"
-            piparch: win_amd64
-
-          - name: win64 3.6
-            os: windows-latest
-            python: "3.6"
-            piparch: win_amd64
-
-          - name: win64 3.7
-            os: windows-latest
-            python: "3.7"
-            piparch: win_amd64
-
-          - name: win64 3.8
-            os: windows-latest
-            python: "3.8"
-            piparch: win_amd64
-
-          - name: win64 3.9
-            os: windows-latest
-            python: "3.9"
-            piparch: win_amd64
-
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: true
-      - name: Automatic core dumper analysis
-        uses: mdavidsaver/ci-core-dumper@master
-
-
-      - name: Setup native python
-        if: matrix.python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python }}
-          #architecture: x64
-
-      - name: Prepare
-        shell: bash
-        run: |
-          python -m pip install -U pip
-          python -m pip install twine
-          python --version
-          python -m pip --version
-          python -m twine -h
-
-          python -m pip install setuptools wheel nose2
-          python -m pip install $PRE setuptools_dso>=2.1a1 epicscorelibs>=7.0.3.99.2.0a1
-
-      - name: Source
-        run: python setup.py sdist --formats=gztar
-
-      - name: Wheel
-        shell: bash
-        run: python -m pip wheel -v -w dist dist/pvxslibs-*.tar.gz
-
-      - name: Test Wheel
-        run: |
-          cd dist
-          python -m pip install pvxslibs-*.whl
-          python -m nose2 pvxslibs
-
-      - name: List Artifacts
-        run: ls dist/*
-
-      - name: Save Artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: epicscorelibs
-          path: dist/*
-
-  docker-py:
-    name: ${{ matrix.name }}
-    runs-on: ubuntu-latest
-    container:
-      image: ${{ matrix.image }}
-    env:
-      PRE:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # Linux py builds x64
-          - name: linux 2.7 amd64
-            os: ubuntu-latest
-            pyver: cp27-cp27m
-            manylinux: manylinux1
-            arch: x86_64
-
-          # Linux py builds x32
-          - name: linux 2.7 i686
-            os: ubuntu-latest
-            pyver: cp27-cp27m
-            manylinux: manylinux1
-            arch: x86_64
-            pre: linux32
-
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: recursive
-
-      - name: Setup native python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python || '3.7' }}
-          #architecture: x64
-
-      - name: Native Prep/Info
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install setuptools wheel twine
-          which python
-          python --version
-          python -m pip --version
-          python -m twine -h
-          python ./gha-set-pre.py
-
-      - name: PY Source
-        run: |
-          echo "PRE=$PRE"
-          python -m pip install setuptools wheel nose2
-          python -m pip install $PRE setuptools-dso
-          python setup.py sdist --formats=gztar
-          ls dist/*
-
-      - name: Docker PY build
-        if: matrix.pyver && !matrix.source
-        run: |
-          # can't use GHA native docker support since GHA magic binaries need .so absent from old manylinux images :(
-          cat <<EOF > runit.sh
-          #!/bin/sh
-          set -e -x
-          cd /io
-          [ -d dist ]
-          ls dist/*
-          export PATH="/opt/python/${{ matrix.pyver }}/bin:\$PATH"
-          export SETUPTOOLS_DSO_MANYLINUX=${{ matrix.manylinux }}
-          which python
-          python -m pip install -U pip
-          python -m pip install nose2
-
-          python -m pip wheel -v -w dist dist/pvxslibs-*.tar.gz
-
-          cd dist
-          python -m pip install pvxslibs-*.whl
-          python -m nose2 pvxslibs
-          cd ..
-
-          EOF
-          cat runit.sh
-          chmod +x runit.sh
-          docker pull quay.io/pypa/${{ matrix.piparch }}
-          docker run --rm -v `pwd`:/io quay.io/pypa/${{ matrix.manylinux }}_${{ matrix.arch }} ${{ matrix.pre }} /io/runit.sh
-
-      - name: List Artifacts
-        run: ls dist/*
-
-      - name: Save Artifacts
-        uses: actions/upload-artifact@v2
-        with:
-          name: epicscorelibs
-          path: dist/*

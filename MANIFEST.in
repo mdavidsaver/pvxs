@@ -15,5 +15,6 @@ include bundle/libevent/cmake/VersionViaGit.cmake
 include bundle/libevent/*.h
 include bundle/libevent/*.h.cmake
 include bundle/libevent/include/*.h
+include bundle/libevent/compat/sys/*.h
 include bundle/libevent/include/event2/*.h
 include bundle/libevent/*.c
