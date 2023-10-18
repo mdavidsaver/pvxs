@@ -18,11 +18,13 @@ DEFINE_LOGGER(remote, "pvxs.remote.log");
 
 Connection::Connection(const std::shared_ptr<ContextImpl>& context,
                        const SockAddr& peerAddr,
-                       bool reconn)
+                       bool reconn,
+                       bool isTLS)
     :ConnBase (true, context->effective.sendBE(),
                nullptr,
                peerAddr)
     ,context(context)
+    ,isTLS(isTLS)
     ,echoTimer(__FILE__, __LINE__,
                event_new(context->tcp_loop.base, -1, EV_TIMEOUT|EV_PERSIST, &tickEchoS, this))
 {
@@ -45,15 +47,16 @@ Connection::~Connection()
 }
 
 std::shared_ptr<Connection> Connection::build(const std::shared_ptr<ContextImpl>& context,
-                                              const SockAddr& serv, bool reconn)
+                                              const SockAddr& serv, bool reconn, bool tls)
 {
     if(context->state!=ContextImpl::Running)
         throw std::logic_error("Context close()d");
 
+    auto pair(std::make_pair(serv, tls));
     std::shared_ptr<Connection> ret;
-    auto it = context->connByAddr.find(serv);
+    auto it = context->connByAddr.find(pair);
     if(it==context->connByAddr.end() || !(ret = it->second.lock())) {
-        context->connByAddr[serv] = ret = std::make_shared<Connection>(context, serv, reconn);
+        context->connByAddr[pair] = ret = std::make_shared<Connection>(context, serv, reconn, tls);
     }
     return ret;
 }
@@ -62,19 +65,46 @@ void Connection::startConnecting()
 {
     assert(!this->bev);
 
-    auto bev(bufferevent_socket_new(context->tcp_loop.base, -1, BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS));
+    evbufferevent bev;
 
-    bufferevent_setcb(bev, &bevReadS, nullptr, &bevEventS, this);
+#ifdef PVXS_ENABLE_OPENSSL
+    if(isTLS) {
+        auto ctx(SSL_new(context->tls_context.ctx));
+        if(!ctx)
+            throw ossl::SSLError("SSL_new");
+
+        // w/ BEV_OPT_CLOSE_ON_FREE calls SSL_free() on error
+        bev.reset(bufferevent_openssl_socket_new(context->tcp_loop.base,
+                                                 -1,
+                                                 ctx,
+                                                 BUFFEREVENT_SSL_CONNECTING,
+                                                 BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS));
+
+        // added with libevent 2.2.1-alpha
+        //(void)bufferevent_ssl_set_flags(bev.get(), BUFFEREVENT_SSL_DIRTY_SHUTDOWN);
+        // deprecated, but not yet removed
+        bufferevent_openssl_set_allow_dirty_shutdown(bev.get(), 1);
+
+    } else
+#endif
+    {
+        bev.reset(bufferevent_socket_new(context->tcp_loop.base,
+                                         -1,
+                                         BEV_OPT_CLOSE_ON_FREE|BEV_OPT_DEFER_CALLBACKS));
+    }
+
+    bufferevent_setcb(bev.get(), &bevReadS, nullptr, &bevEventS, this);
 
     timeval tmo(totv(context->effective.tcpTimeout));
-    bufferevent_set_timeouts(bev, &tmo, &tmo);
+    bufferevent_set_timeouts(bev.get(), &tmo, &tmo);
 
-    if(bufferevent_socket_connect(bev, const_cast<sockaddr*>(&peerAddr->sa), peerAddr.size()))
+    if(bufferevent_socket_connect(bev.get(), const_cast<sockaddr*>(&peerAddr->sa), peerAddr.size()))
         throw std::runtime_error("Unable to begin connecting");
 
-    connect(bev);
+    connect(std::move(bev));
 
-    log_debug_printf(io, "Connecting to %s, RX readahead %zu\n", peerName.c_str(), readahead);
+    log_debug_printf(io, "Connecting to %s, RX readahead %zu%s\n",
+                     peerName.c_str(), readahead, isTLS ? " TLS" : "");
 }
 
 void Connection::createChannels()
@@ -128,11 +158,36 @@ void Connection::sendDestroyRequest(uint32_t sid, uint32_t ioid)
 
 void Connection::bevEvent(short events)
 {
+#ifdef PVXS_ENABLE_OPENSSL
+    if((events & (BEV_EVENT_ERROR|BEV_EVENT_EOF)) && isTLS && bev) {
+        while(auto err = bufferevent_get_openssl_error(bev.get())) {
+            log_err_printf(io, "TLS Error (0x%lx) %s\n",
+                           err, ERR_reason_error_string(err));
+        }
+    }
+#endif
     ConnBase::bevEvent(events);
     // called Connection::cleanup()
 
     if(bev && (events&BEV_EVENT_CONNECTED)) {
         log_debug_printf(io, "Connected to %s\n", peerName.c_str());
+        connTime = epicsTime::getCurrent();
+
+        auto peerCred(std::make_shared<ServerCredentials>());
+        peerCred->peer = peerName;
+        peerCred->isTLS = isTLS;
+
+#ifdef PVXS_ENABLE_OPENSSL
+        if(isTLS) {
+            auto ctx = bufferevent_openssl_get_ssl(bev.get());
+            assert(ctx);
+            ossl::SSLContext::fill_credentials(*peerCred, ctx);
+        } else
+#endif
+        {
+            peerCred->method = "anonymous";
+        }
+        cred = std::move(peerCred);
 
         if(bufferevent_enable(bev.get(), EV_READ|EV_WRITE))
             throw std::logic_error("Unable to enable BEV");
@@ -157,7 +212,7 @@ void Connection::cleanup()
 {
     ready = false;
 
-    context->connByAddr.erase(peerAddr);
+    context->connByAddr.erase(std::make_pair(peerAddr, isTLS));
 
     if(bev)
         bev.reset();
@@ -220,6 +275,10 @@ void Connection::handle_CONNECTION_VALIDATION()
 
         if(method=="ca" || (method=="anonymous" && selected!="ca"))
             selected = method;
+#ifdef PVXS_ENABLE_OPENSSL
+        else if(isTLS && method=="x509" && context->tls_context.have_certificate())
+            selected = method;
+#endif
     }
 
     if(!M.good()) {
@@ -383,9 +442,10 @@ void Connection::handle_CREATE_CHANNEL()
 
         auto conns(chan->connectors); // copy list
 
+        struct Connected connEvt(peerName, connTime, cred);
         for(auto& conn : conns) {
             if(!conn->_connected.exchange(true, std::memory_order_relaxed) && conn->_onConn)
-                conn->_onConn();
+                conn->_onConn(connEvt);
         }
     }
 }
