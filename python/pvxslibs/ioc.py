@@ -1,8 +1,6 @@
-import ctypes
 import os
 
 from epicscorelibs import ioc
-from setuptools_dso.runtime import find_dso
 import pvxslibs.path
 
 os.environ.setdefault("PVXS_QSRV_ENABLE", "YES")
